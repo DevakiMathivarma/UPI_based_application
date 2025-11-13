@@ -1,0 +1,60 @@
+{% extends "core/base.html" %}
+{% block title %}Register — GapyPay{% endblock %}
+
+{% block content %}
+<section class="card auth-card animate-up">
+  <div class="auth-split">
+    <div class="auth-visual">
+      <h2 class="hero">Create your account</h2>
+      <p class="muted">Fast OTP-based registration. Secure payments. Start accepting or sending UPI transfers.</p>
+      <div class="bubble-row">
+        <span class="bubble">UPI</span>
+        <span class="bubble">OTP</span>
+        <span class="bubble">Razorpay</span>
+      </div>
+    </div>
+
+    <div class="auth-form">
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <h3 class="form-title">Sign up</h3>
+
+        <label class="field">
+          <span class="label-text">Username</span>
+          <input type="text" name="username" placeholder="Enter username" required />
+        </label>
+
+        <label class="field">
+          <span class="label-text">Email</span>
+          <input type="email" name="email" placeholder="Enter email address" required />
+        </label>
+
+        <label class="field">
+          <span class="label-text">Phone number</span>
+          <input type="tel" name="phone" placeholder="10-digit number" pattern="[0-9]{10}" required />
+        </label>
+
+        <label class="field">
+          <span class="label-text">Password</span>
+          <input type="password" name="password" placeholder="Enter password" required />
+        </label>
+
+        <label class="field">
+          <span class="label-text">Confirm Password</span>
+          <input type="password" name="confirm_password" placeholder="Re-enter password" required />
+        </label>
+
+        <div class="form-row">
+          <button class="btn btn-primary" type="submit">Create account & send OTP</button>
+          <a class="btn btn-ghost" href="{% url 'core:login' %}">Already have account?</a>
+        </div>
+
+        <p class="muted small">
+          We’ll send a one-time password (OTP) to your <strong>email</strong> for verification.  
+          Check your inbox or spam folder after signing up.
+        </p>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

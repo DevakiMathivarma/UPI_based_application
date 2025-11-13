@@ -1,0 +1,964 @@
+.dashboard-wrap{ padding:18px 0; }
+.dash-top-cards{ display:flex; gap:14px; margin-bottom:18px; }
+/* .card.small{ flex:1; padding:18px; } */
+/* Minimal yet attractive card design */
+.card.small {
+    flex: 1;
+    padding: 18px;
+    border-radius: 14px;
+
+    /* soft glass look */
+    background: rgba(255,255,255,0.45);
+    backdrop-filter: blur(10px);
+
+    /* thin border */
+    border: 1px solid rgba(0,0,0,0.05);
+
+    /* subtle shadow */
+    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+
+    /* animations */
+    transition: 
+        transform 0.25s ease,
+        box-shadow 0.25s ease,
+        border-color 0.25s ease;
+}
+
+/* Hover interaction */
+.card.small:hover {
+    transform: translateY(-6px) scale(1.03);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+    border-color: rgba(0,0,0,0.12);
+}
+
+/* Optional glowing top highlight (light accent) */
+.card.small::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 10%;
+    width: 80%;
+    height: 4px;
+    border-radius: 50px;
+    background: linear-gradient(90deg,#ff9f1c,#ffd23f,#ff6b6b);
+    opacity: 0.25;
+    transition: opacity .3s ease;
+}
+
+/* highlight stronger on hover */
+.card.small:hover::before {
+    opacity: 0.55;
+}
+
+/* .input{ width:100%; padding:10px; margin:6px 0; border-radius:8px; background:rgba(255,255,255,0.02); color:var(--text); border:1px solid rgba(255,255,255,0.03); } */
+/* Modern glass input */
+.input {
+    width: 100%;
+    padding: 12px;
+    margin: 6px 0;
+    border-radius: 10px;
+
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(6px);
+
+    color: var(--text);
+    border: 1px solid rgba(67, 66, 66, 0.12);
+
+    font-size: 15px;
+
+    transition: 
+        border-color 0.25s ease,
+        background 0.25s ease,
+        box-shadow 0.25s ease,
+        transform 0.2s ease;
+}
+
+/* Hover — soft highlight */
+.input:hover {
+    background: rgba(255, 255, 255, 0.10);
+    border-color: rgba(255, 255, 255, 0.18);
+}
+
+/* Focus — glowing blue ring + slight lift */
+.input:focus {
+    outline: none;
+
+    border-color: #3abff8; /* soft cyan glow */
+    background: rgba(255, 255, 255, 0.14);
+
+    box-shadow: 0 0 0 3px rgba(58,191,248,0.25);
+    transform: translateY(-2px);
+}
+
+/* Placeholder styling */
+.input::placeholder {
+    color: black;
+    opacity: 1;
+}
+
+/* .txn-table{ width:100%; border-collapse:collapse; }
+.txn-table th{
+  text-align: left;
+  padding:8px 20px;
+}
+.txn-table th, .txn-table td{ padding:8px 10px; border-bottom:1px solid rgba(175, 172, 172, 0.03);text-align: left; } */
+.txn-table{
+  width:100%;
+  border-collapse: collapse;
+}
+
+.txn-table th,
+.txn-table td{
+  padding: 10px 16px;   /* SAME padding */
+  text-align: left;
+  border-bottom:1px solid rgba(175, 172, 172, 0.1);
+}
+
+.txn-table th{
+  font-weight: 600;
+  text-align: center;
+  
+}
+
+
+/* Dark-theme payment modal (replace existing modal rules with this) */
+.modal{
+  position:fixed;
+  left:0; top:0; right:0; bottom:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(2,6,10,0.75); /* darker translucent backdrop */
+  z-index:2000;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  padding:20px;
+}
+
+/* Card inside modal */
+.modal-inner{
+  width:900px;
+  max-width:96%;
+  padding:22px;
+  position:relative;
+  background: linear-gradient(180deg, rgba(18,18,20,0.98), rgba(12,12,14,0.98));
+  border-radius:14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+  color: #e6eef8;
+  transition: transform .18s ease, opacity .18s ease;
+  transform: translateY(0);
+}
+
+/* //// */
+/* Enhanced .btncolr — animated CTA, drop-in (no class name changes) */
+.btncolr {
+  --btn-height: 44px;
+  --btn-radius: 12px;
+  --accent-a: #ff9f1c;   /* orange */
+  --accent-b: #ffd23f;   /* warm yellow */
+  --accent-c: #ff6b6b;   /* coral */
+  --glass-shadow: 0 10px 30px rgba(15,24,30,0.10);
+  --glow-shadow: 0 18px 50px rgba(255,160,50,0.12);
+  --trans: 260ms cubic-bezier(.2,.9,.3,1);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--btn-height);
+  padding: 0 18px;
+  border-radius: var(--btn-radius);
+  font-weight: 400;
+  letter-spacing: 0.6px;
+  color: #062022; /* darker text for contrast on warm bg */
+  background: linear-gradient(90deg, var(--accent-a), var(--accent-b) 60%);
+  border: 0;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transform-origin: center;
+  box-shadow: var(--glass-shadow);
+  transition:
+    transform var(--trans),
+    box-shadow var(--trans),
+    filter var(--trans),
+    opacity var(--trans),
+    background var(--trans);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* subtle floating idle micro-movement */
+.btncolr {
+  animation: btn-idle 6s ease-in-out infinite;
+}
+@keyframes btn-idle {
+  0% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-2px) scale(1.002); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+/* shimmering sweep using ::before */
+.btncolr::before {
+  content: "";
+  position: absolute;
+  left: -80%;
+  top: -10%;
+  width: 60%;
+  height: 120%;
+  transform: skewX(-22deg);
+  background: linear-gradient(90deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06), rgba(255,255,255,0.12));
+  opacity: 0.85;
+  pointer-events: none;
+  transition: transform 1.2s linear, opacity 220ms;
+  will-change: transform, opacity;
+}
+
+/* glowing animated outline using ::after */
+.btncolr::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: calc(var(--btn-radius) + 4px);
+  background: linear-gradient(180deg, rgba(255,210,63,0.06), rgba(255,120,30,0.03));
+  filter: blur(8px);
+  opacity: 0;
+  transition: opacity var(--trans), transform var(--trans);
+  pointer-events: none;
+}
+
+/* hover / focus / active interactions */
+.btncolr:hover,
+.btncolr:focus {
+  transform: translateY(-6px) scale(1.03);
+  box-shadow: var(--glow-shadow);
+  outline: none;
+}
+
+/* start shimmer on hover */
+.btncolr:hover::before,
+.btncolr:focus::before {
+  transform: translateX(220%) skewX(-22deg);
+  opacity: 1;
+}
+
+/* reveal the faint glow */
+.btncolr:hover::after,
+.btncolr:focus::after {
+  opacity: 1;
+}
+
+/* pressed state */
+.btncolr:active {
+  transform: translateY(-2px) scale(.995);
+  box-shadow: 0 8px 20px rgba(11,24,50,0.06);
+  transition-duration: 120ms;
+}
+
+/* accessible focus ring (keyboard focus) */
+.btncolr:focus-visible {
+  box-shadow: 0 20px 48px rgba(255,160,50,0.14);
+  outline: 3px solid rgba(255,210,63,0.10);
+  outline-offset: 4px;
+}
+
+/* small size support if you add a modifier */
+.btncolr.small {
+  min-height: 36px;
+  padding: 0 14px;
+  font-size: 14px;
+  border-radius: 10px;
+}
+
+/* optional outline variant (if you want orange text on transparent) */
+.btncolr.outline {
+  background: transparent;
+  color: var(--accent-a);
+  border: 2px solid rgba(255,159,28,0.12);
+  box-shadow: none;
+}
+.btncolr.outline:hover {
+  background: linear-gradient(90deg, rgba(255,159,28,0.06), rgba(255,210,63,0.04));
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 16px 36px rgba(255,159,28,0.06);
+}
+
+/* Respect reduced motion preference: disable non-essential animations */
+@media (prefers-reduced-motion: reduce) {
+  .btncolr,
+  .btncolr::before,
+  .btncolr::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .btncolr:hover::before,
+  .btncolr:focus::before { transform: none; opacity: 0; }
+}
+
+/* //// */
+/* Close button */
+.modal-close{
+  position:absolute;
+  right:12px;
+  top:8px;
+  font-size:22px;
+  background:none;
+  border:0;
+  color:var(--muted);
+  cursor:pointer;
+  padding:6px;
+  border-radius:8px;
+}
+.modal-close:hover{ color:#fff; background:rgba(255,255,255,0.02); }
+
+/* Layout inside modal */
+.payment-grid{
+  display:flex;
+  gap:18px;
+  align-items:flex-start;
+  margin-top:10px;
+  flex-wrap:wrap;
+}
+
+/* Methods column */
+.methods{
+  flex: 1 1 260px;
+  min-width: 220px;
+  max-width: 340px;
+}
+
+/* Individual provider buttons */
+.method-btn{
+  display:block;
+  width:100%;
+  padding:12px 14px;
+  margin:10px 0;
+  border-radius:10px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border: 1px solid rgba(255,255,255,0.04);
+  text-align:left;
+  color: #e9f2ff;
+  font-weight:600;
+  cursor:pointer;
+  box-shadow: 0 4px 12px rgba(2,6,10,0.6);
+  transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+}
+.method-btn:hover{
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(2,6,10,0.65);
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+}
+
+/* Summary column */
+.summary{
+  flex: 1 1 320px;
+  min-width: 260px;
+  max-width: 560px;
+  padding:14px;
+  border-radius:10px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
+  border: 1px solid rgba(255,255,255,0.02);
+  color:#dbe9ff;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  align-items:flex-start;
+  justify-content:center;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.01);
+}
+
+.summary p{ margin:0; font-size:15px; color: #d6e6ff; }
+.summary strong{ color:#fff; font-weight:700; }
+
+/* QR Modal specifics */
+#qrModal .modal-inner,
+#qrModal .summary{
+  background: linear-gradient(180deg, rgba(8,8,10,0.98), rgba(6,6,8,0.98));
+}
+#qrImg{
+  width:260px;
+  height:260px;
+  border-radius:8px;
+  display:block;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.03);
+}
+
+/* UPI text input & copy button */
+#upiText{
+  flex:1;
+  padding:10px;
+  border-radius:8px;
+  border:1px solid rgba(255,255,255,0.04);
+  background: rgba(255,255,255,0.02);
+  color:#fff;
+  outline:none;
+}
+#upiText:focus{ box-shadow: 0 0 0 3px rgba(70,130,255,0.06); }
+
+#copyUpiBtn, .btn {
+  padding:8px 12px;
+  border-radius:8px;
+  border:1px solid rgba(255,255,255,0.06);
+  background: linear-gradient(180deg, rgba(30,40,60,0.15), rgba(20,28,46,0.12));
+  color:#fff;
+  cursor:pointer;
+  font-weight:600;
+}
+#copyUpiBtn:hover{ transform: translateY(-1px); }
+
+
+.headline{font-size:2rem;margin:6px 0}
+.sub{color:var(--muted);margin-bottom:18px}
+.cards-wrap{display:flex;gap:18px;flex-wrap:wrap}
+.card{min-width:260px}
+.recharge-card{border:2px dashed rgba(6,182,212,0.12);transition:transform .28s}
+.recharge-card:hover{transform:translateY(-8px)}
+.btn-large{padding:12px 18px;font-weight:700}
+.recent-list{list-style:none;padding:0;margin:8px 0 0}
+.recent-list li{padding:6px 0;border-bottom:1px dashed rgba(255,255,255,0.02); color:var(--muted)}
+@keyframes floatIn { from{opacity:0;transform:translateY(12px) scale(.98)} to{opacity:1;transform:translateY(0) scale(1)} }
+.card{animation: floatIn .5s ease both}
+
+
+
+/* Small visual helpers */
+.method-btn:active, #copyUpiBtn:active{ transform: translateY(0); }
+
+.method-btn{ display:block; width:100%; padding:12px; margin:10px 0; border-radius:8px; background:var(--glass); border:1px solid var(--glass-border); text-align:left; }
+.status-success{ color:var(--success); font-weight:700; }
+.status-pending{ color:var(--muted) }
+.status-failed{ color:var(--danger); font-weight:700;}
+
+.txn-row { cursor: pointer; }
+.txn-row:hover { background: rgba(0,0,0,0.03); }
+/* ----- FULLSCREEN MODAL BACKDROP ----- */
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    padding: 20px; /* helps mobile */
+}
+
+/* ----- CENTERED POPUP ----- */
+.modal-inner {
+    /* background: #fff; */
+    width: 90%;
+    max-width: 560px;
+    max-height: 85vh;          /* ✨ Important (scroll inside) */
+    overflow-y: auto;          /* ✨ Inner scroll */
+    padding: 20px;
+    border-radius: 12px;
+    position: relative;
+    box-shadow: 0 10px 35px rgba(0,0,0,0.25);
+    animation: popupShow 0.25s ease;
+}
+
+/* Close button design */
+.modal-close {
+    position: absolute;
+    right: 14px;
+    top: 10px;
+    font-size: 24px;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+/* Smooth popup animation */
+/* @keyframes popupShow {
+    from { opacity: 0; transform: scale(0.92); }
+    to   { opacity: 1; transform: scale(1); }
+} */
+
+/* Nice scroll bar */
+.modal-inner::-webkit-scrollbar {
+    width: 6px;
+}
+.modal-inner::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 6px;
+}
+
+
+/* ---------- Very small phones (320–374px) ---------- */
+@media (min-width:320px) and (max-width:374px) {
+
+  /* page container / safe padding */
+  .container { width:100%; max-width:100%; padding-left:10px; padding-right:10px; box-sizing:border-box; }
+
+  /* ===== HEADER / NAV ===== */
+  .site-header {
+    padding: 8px 10px !important;
+    border-radius: 10px !important;
+  }
+
+  .header-inner {
+    display:flex !important;
+    align-items:center;
+    justify-content:space-between; /* brand left, nav area center, logout right */
+    gap:8px;
+    width:100%;
+    box-sizing:border-box;
+    padding:0;
+  }
+
+  /* BRAND: show small icon; hide long text */
+  .brand { display:flex; align-items:center; gap:8px; flex:0 0 auto; }
+  .brand-icon { width:36px; height:36px; padding:5px; border-radius:8px; flex:0 0 auto; }
+  .brand-text { display:none !important; } /* hide label for tiny screens */
+
+  /* NAV: center links; allow wrapping; keep logout pushed right */
+  .nav {
+    display:flex !important;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    flex:1 1 auto;
+    min-width:0;
+    flex-wrap:wrap;
+  }
+  .nav-link {
+    padding:6px 8px;
+    font-size:13px;
+    white-space:nowrap;
+    max-width:48%;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    box-sizing:border-box;
+  }
+
+  /* Ensure logout element (button/anchor) sits at far right */
+  .nav > .btn, .nav > .btn-ghost, .nav > .btn-primary, .nav > button, .nav > a.btn {
+    margin-left:auto !important;
+    flex:0 0 auto;
+    height:36px;
+    padding:6px 10px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:10px;
+    white-space:nowrap;
+  }
+
+  /* ===== Top cards / quickpay / forms ===== */
+  .dash-top-cards, .cards-wrap { gap:10px; flex-direction:column; display:flex !important; }
+  .card.small { width:100% !important; padding:12px !important; min-width:unset; box-sizing:border-box; }
+  .input, input[type="text"], input[type="email"], input[type="password"], .btn, .btncolr, .method-btn {
+    width:100% !important;
+    padding:10px 12px !important;
+    font-size:14px !important;
+    box-sizing:border-box;
+  }
+  .btncolr { min-height:42px; border-radius:10px; }
+
+  /* Reduce card pill size */
+  .card::before { left:12px; top:10px; width:56px; height:5px; }
+
+  /* Ensure card pseudo elements are anchored and not pushing layout */
+  .card { position:relative; overflow:visible; }
+
+  /* ===== Transactions table — scrollable but not truncating words =====
+     - allow cells to wrap (so long words are not cut); table remains horizontally scrollable.
+  */
+
+
+  
+  /* Wrap whole table in scrollable area */
+  #transactionsSection {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      background-color: white;
+      
+  }
+
+  /* Table must NOT be fixed layout */
+  .txn-table {
+      width: max-content;      /* expands to full content width */
+      min-width: 100%;         /* never shrink below container */
+      border-collapse: collapse;
+        /* <-- IMPORTANT */
+      font-size: 14px;
+      border: none;
+  }
+
+  /* Cells — allow natural width */
+  .txn-table th,
+  .txn-table td {
+      padding: 10px 14px;
+      white-space: nowrap !important; /* DO NOT WRAP */
+      text-align: left;
+  }
+
+  /* Amount column right-aligned */
+  .txn-table td:nth-child(3),
+  .txn-table th:nth-child(3) {
+      text-align: right !important;
+  }
+
+  /* Status column center aligned */
+  .txn-table td:nth-child(5),
+  .txn-table th:nth-child(5) {
+      text-align: center !important;
+  }
+  /* ===== Modal / popup adjustments ===== */
+  .modal, .otp-modal {
+    align-items:flex-end; /* slide-up feel */
+    padding:8px;
+  }
+  .modal-inner, .otp-modal-inner {
+    width:100% !important;
+    max-width:100% !important;
+    padding:14px !important;
+    border-radius:12px !important;
+    max-height:88vh !important;
+    overflow-y:auto !important;
+    box-sizing:border-box;
+  }
+  #qrImg { width:160px !important; height:160px !important; display:block; margin:8px auto; }
+
+  /* ===== Minor layout tweaks & safety ===== */
+  .dashboard-wrap { padding: 12px 6px !important; }
+  .card { padding:12px !important; margin-top:12px !important; border-radius:12px !important; }
+  h3 { font-size:16px; margin-bottom:8px; }
+
+  /* Avoid accidental horizontal page scroll from shadows / pseudo elements */
+  html, body { overflow-x: hidden !important; }
+
+  /* Ensure LTR for transactions area (prevents inherited RTL) */
+  #transactionsSection, #transactionsSection * { direction: ltr !important; }
+
+  /* Respect reduced-motion users */
+  @media (prefers-reduced-motion: reduce) {
+    .txn-row::after, .card::before, .card::after, .btncolr::before { animation: none !important; transition: none !important; transform: none !important; }
+  }
+}
+/* ---------- Small phones (375px–424px) ---------- */
+@media (min-width: 374px) and (max-width: 424px) {
+  /* Stack dashboard cards vertically with slightly wider spacing */
+  .dash-top-cards {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .card.small {
+    flex: none;
+    width: 100%;
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  /* Inputs and buttons */
+  .input {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    font-size: 15px;
+    border-radius: 10px;
+  }
+
+  .btn, .method-btn {
+    width: 100%;
+    padding: 12px;
+    font-size: 15px;
+    border-radius: 10px;
+  }
+
+  #scanQrBtn, #addMoneyBtn, #showQR {
+    width: 100%;
+  }
+
+  /* QR container and canvas sizing */
+  #qrContainer {
+    margin-top: 14px;
+  }
+  #upiQr {
+    width: 180px !important;
+    height: 180px !important;
+    display: block;
+    margin: 10px auto;
+  }
+
+  /* Modal adjustments for better readability */
+  .modal {
+    align-items: flex-end;
+    padding: 10px;
+  }
+
+  .modal-inner {
+    width: 100%;
+    max-width: 100%;
+    padding: 16px;
+    border-radius: 14px 14px 0 0;
+    max-height: 88vh;
+    overflow-y: auto;
+    box-sizing: border-box;
+  }
+
+  .modal-close {
+    right: 10px;
+    top: 8px;
+    font-size: 22px;
+  }
+
+  /* Payment grid stacks vertically with mild spacing */
+  .payment-grid {
+    display: block;
+  }
+
+  .payment-grid .methods {
+    margin-bottom: 14px;
+  }
+
+  .summary {
+    margin-top: 10px;
+    font-size: 14px;
+  }
+
+  /* Transactions table scrollable horizontally */
+  .txn-table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    font-size: 14px;
+  }
+
+  .txn-table th,
+  .txn-table td {
+    padding: 8px 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Dashboard container & card spacing */
+  .dashboard-wrap {
+    padding: 14px 8px;
+  }
+
+  .card {
+    padding: 14px;
+    margin-top: 14px;
+    border-radius: 12px;
+  }
+
+  /* Text and labels */
+  .big {
+    font-size: 20px;
+  }
+
+  h3 {
+    font-size: 17px;
+    margin-bottom: 10px;
+  }
+
+  .muted,
+  .status-pending {
+    font-size: 14px;
+  }
+
+  /* Ensure inputs and copy button fit together in QR modal */
+  #upiText {
+    padding: 10px;
+    font-size: 14px;
+    border-radius: 8px;
+  }
+
+  #copyUpiBtn {
+    padding: 10px;
+    min-width: 80px;
+  }
+
+  /* Minor polish */
+  .method-btn {
+    text-align: center;
+    margin: 8px 0;
+  }
+}
+
+/* ---------- Regular phones (425px–599px) ---------- */
+@media (min-width: 424px) and (max-width: 599px) {
+  /* Layout: still stacked, but with wider card padding */
+  .dash-top-cards {
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .card.small {
+    flex: none;
+    width: 100%;
+    padding: 18px;
+    border-radius: 14px;
+  }
+
+  /* Inputs and buttons */
+  .input {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    font-size: 16px;
+    border-radius: 10px;
+  }
+
+  .btn, .method-btn {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 16px;
+    border-radius: 10px;
+  }
+
+  #scanQrBtn, #addMoneyBtn, #showQR {
+    width: 100%;
+  }
+
+  /* QR container / canvas */
+  #qrContainer {
+    margin-top: 16px;
+  }
+
+  #upiQr {
+    width: 200px !important;
+    height: 200px !important;
+    display: block;
+    margin: 12px auto;
+  }
+
+  /* Modal adjustments */
+  .modal {
+    align-items: flex-end;
+    padding: 12px;
+  }
+
+  .modal-inner {
+    width: 100%;
+    max-width: 100%;
+    padding: 18px;
+    border-radius: 16px 16px 0 0;
+    max-height: 88vh;
+    overflow-y: auto;
+    box-sizing: border-box;
+  }
+
+  .modal-close {
+    right: 10px;
+    top: 8px;
+    font-size: 22px;
+  }
+
+  /* Payment grid: stacked but balanced */
+  .payment-grid {
+    display: block;
+  }
+
+  .payment-grid .methods {
+    margin-bottom: 16px;
+  }
+
+  .summary {
+    margin-top: 10px;
+    font-size: 15px;
+  }
+
+  /* Transaction table scrollable horizontally */
+  .txn-table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    font-size: 14px;
+  }
+
+  .txn-table th, .txn-table td {
+    padding: 10px 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    overflow-x: auto;
+  }
+
+  /* Dashboard container */
+  .dashboard-wrap {
+    padding: 16px 10px;
+  }
+
+  .card {
+    padding: 16px;
+    margin-top: 16px;
+    border-radius: 14px;
+  }
+
+  /* Text and headings */
+  h3 {
+    font-size: 18px;
+    margin-bottom: 12px;
+  }
+
+  .big {
+    font-size: 22px;
+  }
+
+  .muted,
+  .status-pending {
+    font-size: 14px;
+  }
+
+  /* QR modal inputs */
+  #upiText {
+    padding: 10px;
+    font-size: 15px;
+    border-radius: 8px;
+  }
+
+  #copyUpiBtn {
+    padding: 10px;
+    min-width: 90px;
+  }
+
+  /* Method buttons cleaner spacing */
+  .method-btn {
+    text-align: center;
+    margin: 10px 0;
+  }
+
+  /* Ensure table and modals don’t overflow the screen */
+  .modal-inner img#qrImg {
+    width: 240px !important;
+    height: 240px !important;
+    margin: 12px auto;
+    display: block;
+  }
+
+  /* SIMPLE fix — paste at the end of your CSS */
+.card { position: relative; } 
+.txn-table { table-layout: fixed; width:100%; border-collapse:collapse; }
+.txn-table thead th, .txn-table tbody td { padding: 12px 14px !important; vertical-align: middle !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Fix: make body cells left-aligned, keep Amount right-aligned */
+.txn-table thead th { text-align: left !important; }    /* headers left */
+.txn-table tbody td { text-align: left !important; }    /* default for rows */
+.txn-table tbody td:nth-child(3) { text-align: right !important; } /* Amount column */
+/* FINAL FIX — fully forces left alignment for all table text */
+#transactionsSection .txn-table,
+#transactionsSection .txn-table * {
+    text-align: left !important;
+}
+
+/* amount column only */
+#transactionsSection .txn-table td:nth-child(3) {
+    text-align: right !important;
+}
+
+
+}
+
+
+/* Responsive adjustments */
+@media (max-width:900px){
+  .payment-grid{ flex-direction:column; gap:12px; }
+  .modal-inner{ padding:16px; border-radius:12px; }
+  #qrImg{ width:220px; height:220px; margin:0 auto; }
+}

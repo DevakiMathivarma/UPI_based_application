@@ -1,0 +1,311 @@
+{% extends "core/base.html" %}
+{% block title %}Login — GapyPay{% endblock %}
+
+{% block content %}
+<section class="card auth-card animate-up">
+  <div class="auth-split">
+    <div class="auth-visual">
+      <h2 class="hero">Welcome back</h2>
+      <p class="muted">
+        Login with password or get a one-time code (OTP) sent to your <strong>email</strong>.
+        Click "Send OTP to Email" to receive the code and enter it in the popup.
+      </p>
+      <div class="qr-box" aria-hidden>
+        <!-- decorative QR-like pattern -->
+        <div class="qr-dot"></div>
+        <div class="qr-dot big"></div>
+        <div class="qr-dot"></div>
+      </div>
+    </div>
+
+    <div class="auth-form">
+      <!-- Main login form: username + password (regular POST) -->
+      <form method="post" id="login-form" novalidate>
+        {% csrf_token %}
+        <h3 class="form-title">Login</h3>
+
+        {% if messages %}
+          {% for msg in messages %}
+            <div class="form-error">{{ msg }}</div>
+          {% endfor %}
+        {% endif %}
+
+        <label class="field">
+          <span class="label-text">Username</span>
+          <input type="text" name="username" id="username" value="{{ prefill_username|default:'' }}" required />
+        </label>
+
+        <label class="field">
+          <span class="label-text">Password</span>
+          <input type="password" name="password" id="password" autocomplete="current-password" />
+          <small class="muted">Or leave password blank and use Email OTP.</small>
+        </label>
+
+        <!-- Keep the OTP input here optional (users can also use modal) -->
+        <label class="field">
+          <span class="label-text">OTP (optional)</span>
+          <input type="text" name="otp" id="otp" maxlength="6" pattern="[0-9]{6}" placeholder="Enter OTP if you have one" />
+        </label>
+
+        <div class="form-row">
+          <!-- Regular form submit --> 
+          <button class="btn btn-primary" type="submit">Login</button>
+
+          <!-- This triggers AJAX send and modal open -->
+          <button type="button" id="resendBtn" class="btn btn-outline">Send OTP to Email</button>
+        </div>
+
+        <div class="muted small" id="resendInfo">
+          {% if prefill_username %}
+            OTP was last sent to the email linked to <strong>{{ prefill_username }}</strong>.
+          {% endif %}
+        </div>
+      </form>
+
+      <div class="space small">
+        <a class="link" href="{% url 'core:register' %}">Create a new account</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- OTP Modal -->
+<div id="otpModal" class="otp-modal" style="display:none;">
+  <div class="otp-modal-inner">
+    <h4>Enter OTP</h4>
+    <p class="muted small" id="otpNotice">A one-time code was sent to your email.</p>
+
+    <form id="otp-form" onsubmit="return false;">
+      {% csrf_token %}
+      <input type="hidden" name="username" id="modalUsername" value="{{ prefill_username|default:'' }}" />
+      <label class="field">
+        <span class="label-text">OTP</span>
+        <input type="text" name="otp" id="modalOtp" maxlength="6" pattern="[0-9]{6}" required />
+      </label>
+
+      <div class="form-row">
+        <button type="button" id="verifyOtpBtn" class="btn btn-primary">Verify OTP</button>
+        <button type="button" id="modalResendBtn" class="btn btn-outline">Resend OTP</button>
+      </div>
+
+      <div class="muted small" id="modalInfo" style="margin-top:8px;"></div>
+    </form>
+  </div>
+</div>
+
+<style>
+/* Minimal modal styles — adapt to your CSS if needed */
+.otp-modal {
+  position: fixed; inset: 0; display:flex; align-items:center; justify-content:center;
+  background: rgba(0,0,0,0.35); z-index: 9999;
+}
+.otp-modal-inner {
+  background:#fff; padding:1.5rem; border-radius:8px; width:360px; box-shadow:0 6px 20px rgba(0,0,0,0.12);
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  // Elements (IDs preserved)
+  const resendBtn = document.getElementById('resendBtn');
+  const loginForm = document.getElementById('login-form');
+  const resendInfo = document.getElementById('resendInfo');
+
+  // Modal elements
+  const otpModal = document.getElementById('otpModal');
+  const modalUsername = document.getElementById('modalUsername');
+  const modalOtp = document.getElementById('modalOtp');
+  const verifyOtpBtn = document.getElementById('verifyOtpBtn');
+  const modalResendBtn = document.getElementById('modalResendBtn');
+  const modalInfo = document.getElementById('modalInfo');
+
+  // Config
+  const COOLDOWN_SECONDS = {{ RESEND_COOLDOWN|default:60 }};
+  let modalResendCooldown = false;
+  let mainResendTimer = null;
+
+  // helper: read csrftoken cookie (works with Django's CSRF cookie)
+  function getCookie(name){
+    const cookies = document.cookie ? document.cookie.split('; ') : [];
+    for (let i = 0; i < cookies.length; i++) {
+      const parts = cookies[i].split('=');
+      const key = parts.shift();
+      const val = parts.join('=');
+      if (key === name) return decodeURIComponent(val);
+    }
+    return null;
+  }
+
+  // show modal and set username
+  function openModal(username){
+    modalUsername.value = username || (document.querySelector('[name="username"]').value || '');
+    otpModal.style.display = 'flex';
+    modalOtp.value = '';
+    modalInfo.textContent = '';
+    setTimeout(()=> modalOtp.focus(), 100);
+  }
+
+  function closeModal(){
+    otpModal.style.display = 'none';
+    modalOtp.value = '';
+  }
+
+  // countdown helper for a button
+  function startButtonCountdown(btn, seconds){
+    btn.disabled = true;
+    let remaining = seconds;
+    const origText = btn.textContent;
+    btn.textContent = `${origText.split('(')[0].trim()} (${remaining}s)`;
+    const id = setInterval(()=> {
+      remaining--;
+      if(remaining <= 0){
+        clearInterval(id);
+        btn.disabled = false;
+        btn.textContent = origText;
+      } else {
+        btn.textContent = `${origText.split('(')[0].trim()} (${remaining}s)`;
+      }
+    }, 1000);
+    return id;
+  }
+
+  // Send OTP via AJAX to resend_otp endpoint
+  async function sendOtpRequest(username){
+    if(!username) return { ok:false, message:'Username required' };
+    const csrftoken = getCookie('csrftoken');
+    if(!csrftoken) return { ok:false, message: 'CSRF token missing' };
+
+    const payload = new FormData();
+    payload.append('username', username);
+    payload.append('send_otp',1)
+    try {
+      const resp = await fetch("{% url 'core:resend_otp' %}", {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrftoken,
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: payload,
+        credentials: 'same-origin'
+      });
+      // try parse JSON
+      const data = await resp.json();
+      return data;
+    } catch (err) {
+      console.error('Network error', err);
+      return { ok:false, message:'Network error' };
+    }
+  }
+
+  // Main page Send OTP button
+  resendBtn.addEventListener('click', async function(){
+    const username = (document.querySelector('[name="username"]').value || '').trim();
+    if(!username){ alert('Please enter username to send OTP.'); return; }
+
+    resendBtn.disabled = true;
+    resendBtn.textContent = 'Sending...';
+
+    const result = await sendOtpRequest(username);
+    if(result && result.ok){
+      resendInfo.textContent = result.message || 'OTP sent — check your email.';
+      openModal(username);
+      // start main resend cooldown
+      if(mainResendTimer) clearInterval(mainResendTimer);
+      mainResendTimer = startButtonCountdown(resendBtn, COOLDOWN_SECONDS);
+    } else {
+      alert(result.message || 'Failed to send OTP');
+      resendBtn.disabled = false;
+      resendBtn.textContent = 'Send OTP to Email';
+    }
+  });
+
+  // Modal: Verify OTP (AJAX)
+  verifyOtpBtn.addEventListener('click', async function(){
+    const username = (modalUsername.value || '').trim();
+    const otp = (modalOtp.value || '').trim();
+
+    if(!username || !otp){
+      modalInfo.textContent = 'Enter username and OTP.';
+      return;
+    }
+    if(!/^\d{6}$/.test(otp)){
+      modalInfo.textContent = 'OTP must be 6 digits.';
+      return;
+    }
+
+    verifyOtpBtn.disabled = true;
+    verifyOtpBtn.textContent = 'Verifying...';
+
+    const csrftoken = getCookie('csrftoken');
+    const payload = new FormData();
+    payload.append('username', username);
+    payload.append('otp', otp);
+
+    try {
+      const resp = await fetch("{% url 'core:ajax_verify_otp' %}", {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrftoken,
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: payload,
+        credentials: 'same-origin'
+      });
+      const data = await resp.json();
+
+      if(data && data.ok){
+        // Success: redirect (server provides redirect or use dashboard)
+        window.location.href = data.redirect || "{% url 'core:dashboard' %}";
+      } else {
+        modalInfo.textContent = data.message || 'Invalid OTP.';
+        verifyOtpBtn.disabled = false;
+        verifyOtpBtn.textContent = 'Verify OTP';
+      }
+    } catch (err) {
+      console.error(err);
+      modalInfo.textContent = 'Network error';
+      verifyOtpBtn.disabled = false;
+      verifyOtpBtn.textContent = 'Verify OTP';
+    }
+  });
+
+  // Modal: Resend OTP button
+  modalResendBtn.addEventListener('click', async function(){
+    if(modalResendCooldown) return;
+    const username = (modalUsername.value || '').trim();
+    if(!username){ modalInfo.textContent = 'Username missing'; return; }
+
+    modalResendBtn.disabled = true;
+    modalResendBtn.textContent = 'Resending...';
+
+    const result = await sendOtpRequest(username);
+    if(result && result.ok){
+      modalInfo.textContent = result.message || 'OTP resent to your email.';
+      modalResendCooldown = true;
+      startButtonCountdown(modalResendBtn, COOLDOWN_SECONDS);
+      setTimeout(()=> { modalResendCooldown = false; }, COOLDOWN_SECONDS*1000);
+    } else {
+      modalInfo.textContent = result.message || 'Failed to resend OTP';
+      modalResendBtn.disabled = false;
+      modalResendBtn.textContent = 'Resend OTP';
+    }
+  });
+
+  // Close modal by clicking outside
+  window.addEventListener('click', function(e){
+    if(e.target === otpModal){
+      closeModal();
+    }
+  });
+
+  // Prefill modal username if server provided variable
+  {% if prefill_username %}
+    document.addEventListener('DOMContentLoaded', ()=> {
+      modalUsername.value = "{{ prefill_username }}";
+    });
+  {% endif %}
+})();
+</script>
+{% endblock %}
