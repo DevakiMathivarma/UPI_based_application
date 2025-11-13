@@ -16,7 +16,8 @@ from .forms import RegistrationForm, LoginOTPForm, ResendOTPForm
 from django.core.mail import send_mail
 import random
 import datetime
-
+import logging
+logger = logging.getLogger(__name__)
 User = get_user_model()
 
 # email otp view
@@ -51,7 +52,7 @@ def send_email_otp(user, purpose):
     from_email = "noreply@gapypay.com"
     send_mail(subject, message, from_email, [user.email], fail_silently=False)
 
-    print(f"[EMAIL OTP] Sent to {user.email} | OTP: {otp_code}")
+    logger.info(f"[EMAIL OTP] Sent to {user.email} | OTP: {otp_code}")
     return otp_code
 
 
@@ -107,14 +108,14 @@ from django.contrib.auth import authenticate
 def login_view(request):
     if request.method == 'GET':
         return render(request, 'core/login.html')
-    print('coming here ')
+    logger.info('coming here ')
     # Which button was clicked?
     if 'password' in request.POST:
         # Normal username + password login
         username = request.POST.get('username')
         password = request.POST.get('password')
-        print(username)
-        print(password)
+        logger.info(username)
+        logger.info(password)
         user = authenticate(request, username=username, password=password)
         if user:
             auth_login(request, user)
@@ -205,8 +206,12 @@ def resend_otp_view(request):
     """
     username = request.POST.get('username')
     try:
+        print
+        logger.info("host ",settings.EMAIL_HOST)
+        logger.info("port", settings.EMAIL_PORT)
         socket.create_connection((settings.EMAIL_HOST, settings.EMAIL_PORT), timeout=5)
-    except Exception:
+    except Exception as e:
+        logger.info(e)
         messages.error(request, "Email server not reachable right now.")
         return redirect("login")
     if not username:
@@ -250,11 +255,11 @@ def resend_otp_view(request):
     subject = "Your GapyPay Login OTP"
     message = f"Dear {user.username},\n\nYour new OTP is: {otp_code}\nIt will expire in 5 minutes.\n\nThanks,\nGapyPay Team"
     try:
-        send_mail(subject, message, "mathivarmaganesan@gmail.com", [user.email], fail_silently=False)
+        send_mail(subject, message, settings.EMAIL_HOST, [user.email], fail_silently=False)
     except Exception as e:
-        print(e)
+        logger.info(e)
 
-    print(f"[EMAIL RESEND OTP] Sent to {user.email} | OTP: {otp_code}")
+    logger.info(f"[EMAIL RESEND OTP] Sent to {user.email} | OTP: {otp_code}")
 
     # For AJAX requests (JS fetch in your login.html)
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
@@ -360,7 +365,7 @@ def ajax_verify_otp(request):
 
 #     if not sid or not token or not from_num:
 #         # Fallback: print if Twilio is not configured (useful for dev)
-#         print(f"[SMS fallback] To: {phone} | Msg: {message}")
+#         logger.info(f"[SMS fallback] To: {phone} | Msg: {message}")
 #         return False
 
 #     try:
@@ -370,10 +375,10 @@ def ajax_verify_otp(request):
 #             from_=from_num,
 #             to=phone
 #         )
-#         print(f"[Twilio SMS] Sent to {phone}, SID: {msg.sid}")
+#         logger.info(f"[Twilio SMS] Sent to {phone}, SID: {msg.sid}")
 #         return True
 #     except Exception as e:
-#         print(f"[Twilio Error] Failed to send SMS to {phone}: {e}")
+#         logger.info(f"[Twilio Error] Failed to send SMS to {phone}: {e}")
 #         return False
 
 
@@ -613,8 +618,8 @@ def dashboard_view(request):
     recent_txns = user.transactions.order_by('-created_at')[:10]
     total_sent = user.transactions.filter(status=Transaction.STATUS_SUCCESS).aggregate(
         total=models.Sum('amount'))['total'] or Decimal('0.00')
-    print("asd")
-    print(settings.RAZORPAY_KEY_ID)
+    logger.info("asd")
+    logger.info(settings.RAZORPAY_KEY_ID)
     context = {
         'user': user,
         'recent_txns': recent_txns,
@@ -634,7 +639,7 @@ import razorpay
 
 
 def create_order_razor_view(request):
-    print('hey')
+    logger.info('hey')
     if request.method != 'POST':
         return HttpResponseBadRequest("POST required")
 
@@ -813,7 +818,7 @@ def _safe_mark_failed(txn, reason):
 
 
 def create_order_view(request):
-    print(request.user)
+    logger.info(request.user)
     """
     AJAX endpoint to create a Transaction (PENDING) and (optionally) a Razorpay Order.
     Expects POST: { amount: '500.00', to_upi: 'name@upi', provider: 'gpay'|'razorpay' }
@@ -894,14 +899,14 @@ def i_paid(request):
 
     # send email (customize recipients)
     try:
-        print(settings.DEFAULT_FROM_EMAIL)
-        print(settings.DEFAULT_NOTIFICATION_EMAIL)
-        print(settings.EMAIL_HOST_PASSWORD)
-        print(settings.EMAIL_HOST_USER)
+        logger.info(settings.DEFAULT_FROM_EMAIL)
+        logger.info(settings.DEFAULT_NOTIFICATION_EMAIL)
+        logger.info(settings.EMAIL_HOST_PASSWORD)
+        logger.info(settings.EMAIL_HOST_USER)
         subject=f'Payment received: {txn.txn_num} — ₹{txn.amount}'
         message=f'User {request.user} confirmed payment for {txn.to_upi}. Txn: {txn.txn_num}'
-        print(subject)
-        print(message)
+        logger.info(subject)
+        logger.info(message)
         res = send_mail(
             subject=subject,
             message=message,
@@ -1217,7 +1222,7 @@ from .models import Transaction
 #     Render dashboard with recent transactions for the logged-in user.
 #     Shows the latest 20 by default.
 #     """
-#     print(2)
+#     logger.info(2)
 #     recent_txns = (
 #         Transaction.objects
 #         .filter(user=request.user)
@@ -1235,7 +1240,7 @@ from .models import Transaction
 #             for t in recent_txns
 #         ]
 #         return JsonResponse({"ok": True, "transactions": data})
-#     print(recent_txns)
+#     logger.info(recent_txns)
 #     return render(request, "core/dashboard.html", {
 #         'recent_txns': recent_txns
 #     })
