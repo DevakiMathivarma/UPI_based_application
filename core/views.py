@@ -195,6 +195,7 @@ from django.utils import timezone
 import datetime
 from django.core.mail import send_mail
 import random
+import socket
 
 @require_POST
 def resend_otp_view(request):
@@ -203,6 +204,11 @@ def resend_otp_view(request):
     Works for AJAX and normal POST requests.
     """
     username = request.POST.get('username')
+    try:
+        socket.create_connection((settings.EMAIL_HOST, settings.EMAIL_PORT), timeout=5)
+    except Exception:
+        messages.error(request, "Email server not reachable right now.")
+        return redirect("login")
     if not username:
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
             return JsonResponse({'ok': False, 'message': 'Username is required.'}, status=400)
