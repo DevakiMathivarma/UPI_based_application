@@ -1,0 +1,41 @@
+/* txn_stats.css - simple responsive styling */
+.container { max-width: 1100px; margin: 0 auto; padding: 18px; box-sizing: border-box; }
+.card { padding: 18px; border-radius: 12px; box-shadow: 0 10px 30px rgba(14,28,40,0.06); background: #fff; border: 1px solid rgba(0,0,0,0.04); }
+.stats-top { display:flex; gap:18px; align-items:stretch; justify-content:space-between; flex-wrap:wrap; }
+.summary-cards { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.summary-card { background: linear-gradient(180deg,#fff,#fbfbff); padding:10px 14px; border-radius:10px; min-width:96px; text-align:center; box-shadow: 0 6px 20px rgba(11,24,50,0.04); }
+.summary-card .label { color:#6b7280; font-weight:700; font-size:13px; }
+.summary-card .num { font-size:18px; font-weight:800; color:#0b2b2b; margin-top:6px; }
+.summary-card .num.pending { color:#f59e0b; }
+.summary-card .num.success { color:#10b981; }
+.summary-card .num.failed { color:#ef4444; }
+
+.chart-wrap { width: 260px; height: 240px; padding:6px; box-sizing:border-box; }
+.filters { display:flex; gap:12px; align-items:center; justify-content:space-between; margin-top:16px; flex-wrap:wrap; }
+.tabs { display:flex; gap:8px; }
+.tab { padding:8px 10px; border-radius:8px; background:transparent; border:1px solid rgba(0,0,0,0.04); cursor:pointer; font-weight:700; color:#2b3940; }
+.tab.active { background: linear-gradient(90deg,#ffd23f,#ff9f1c); color:#062022; box-shadow: 0 8px 20px rgba(255,160,40,0.08); }
+.providers { display:flex; gap:8px; align-items:center; }
+
+.table-area { margin-top:14px; }
+.table-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+.txn-table { width:100%; border-collapse:collapse; min-width:720px; }
+.txn-table th, .txn-table td { padding:12px 14px; border-bottom:1px solid rgba(0,0,0,0.04); text-align:left; vertical-align:middle; }
+.txn-table th:nth-child(3), .txn-table td:nth-child(3) { text-align:right; }
+.txn-table th:nth-child(5), .txn-table td:nth-child(5) { text-align:center; }
+
+.status-pending { color:#6b7280; font-weight:700; }
+.status-success { color:#10b981; font-weight:700; }
+.status-failed { color:#ef4444; font-weight:700; }
+
+/* responsive */
+@media (max-width: 900px) {
+  .chart-wrap { width: 200px; height: 180px; }
+  .txn-table { min-width:640px; }
+}
+@media (max-width: 480px) {
+  .stats-top { flex-direction:column; align-items:stretch; gap:12px; }
+  .chart-wrap { width:100%; height:220px; }
+  .txn-table { min-width: 560px; font-size:14px; }
+  .summary-card { min-width:80px; padding:8px; }
+}

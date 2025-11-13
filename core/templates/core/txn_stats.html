@@ -1,0 +1,225 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block title %}Transaction Stats — GapyPay{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'core/css/txn_stats.css' %}">
+
+<div class="container dashboard-wrap">
+  <div class="card">
+    <h3>Transaction Statistics</h3>
+
+    <div class="stats-top">
+      <div class="summary-cards">
+        <div class="summary-card">
+          <div class="label">Total</div>
+          <div id="totalCount" class="num">0</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Pending</div>
+          <div id="pendingCount" class="num pending">0</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Success</div>
+          <div id="successCount" class="num success">0</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Failed</div>
+          <div id="failedCount" class="num failed">0</div>
+        </div>
+      </div>
+
+      <div class="chart-wrap">
+        <canvas id="statusChart" width="300" height="300"></canvas>
+      </div>
+    </div>
+
+    <div class="filters">
+      <div class="tabs">
+        <button class="tab active" data-status="all">All</button>
+        <button class="tab" data-status="pending">Pending</button>
+        <button class="tab" data-status="success">Success</button>
+        <button class="tab" data-status="failed">Failed</button>
+      </div>
+
+      <div class="providers">
+        <label>Provider:</label>
+        <select id="providerFilter">
+          <option value="all">All</option>
+          <option value="gpay">GPay</option>
+          <option value="phonepe">PhonePe</option>
+          <option value="razorpay">Razorpay</option>
+          <option value="upi">UPI</option>
+          <option value="bhim">BHIM</option>
+        </select>
+
+        <input id="txnSearch" class="input" placeholder="Search by UPI / TXN / Provider" />
+      </div>
+    </div>
+
+    <div class="table-area">
+      <div class="table-scroll">
+        <table class="txn-table" id="statsTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>To</th>
+              <th>Amount</th>
+              <th>Provider</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="statsBody">
+            <tr><td colspan="5">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  // Elements
+  const totalCountEl = document.getElementById('totalCount');
+  const pendingCountEl = document.getElementById('pendingCount');
+  const successCountEl = document.getElementById('successCount');
+  const failedCountEl = document.getElementById('failedCount');
+  const statsBody = document.getElementById('statsBody');
+  const providerFilter = document.getElementById('providerFilter');
+  const txnSearch = document.getElementById('txnSearch');
+  const tabs = document.querySelectorAll('.tab');
+
+  // Chart setup
+  const ctx = document.getElementById('statusChart').getContext('2d');
+  let statusChart = new Chart(ctx, {
+    type: 'pie',
+    data: {
+      labels: ['Pending','Success','Failed'],
+      datasets: [{
+        label: 'Transactions',
+        data: [0,0,0],
+        backgroundColor: ['#f59e0b','#10b981','#ef4444'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom' }
+      }
+    }
+  });
+
+  let transactions = [];
+
+  async function loadTransactions() {
+    try {
+      const resp = await fetch("{% url 'core:transactions_view' %}", { headers: { 'X-Requested-With':'XMLHttpRequest' } });
+      const data = await resp.json();
+      transactions = (data.ok && Array.isArray(data.transactions)) ? data.transactions : [];
+    } catch (err) {
+      console.error(err);
+      transactions = [];
+    }
+    renderAll();
+  }
+
+  function summarize(list) {
+    const s = { total: list.length, pending:0, success:0, failed:0, byProvider: {} };
+    list.forEach(t => {
+      const status = (t.status || '').toLowerCase();
+      if (status === 'pending') s.pending++;
+      else if (status === 'success' || status === 'completed') s.success++;
+      else s.failed++;
+      const p = (t.provider || 'unknown').toLowerCase();
+      s.byProvider[p] = (s.byProvider[p] || 0) + 1;
+    });
+    return s;
+  }
+
+  function renderSummary(s) {
+    totalCountEl.textContent = s.total;
+    pendingCountEl.textContent = s.pending;
+    successCountEl.textContent = s.success;
+    failedCountEl.textContent = s.failed;
+
+    // update chart
+    statusChart.data.datasets[0].data = [s.pending, s.success, s.failed];
+    statusChart.update();
+  }
+
+  function matchesFilter(txn, statusFilter, providerVal, q) {
+    const st = (txn.status||'').toLowerCase();
+    if (statusFilter !== 'all') {
+      if (statusFilter === 'pending' && st !== 'pending') return false;
+      if (statusFilter === 'success' && !(st === 'success' || st === 'completed')) return false;
+      if (statusFilter === 'failed' && st === 'success') return false;
+    }
+    if (providerVal !== 'all' && ( (txn.provider||'').toLowerCase() !== providerVal )) return false;
+    if (q) {
+      const s = q.toLowerCase();
+      return (txn.to || '').toLowerCase().includes(s) ||
+             (txn.txn_num || txn.id || '').toString().toLowerCase().includes(s) ||
+             (txn.provider || '').toLowerCase().includes(s);
+    }
+    return true;
+  }
+
+  function renderTable(statusFilter='all', providerVal='all', q='') {
+    statsBody.innerHTML = '';
+    const filtered = transactions.filter(t => matchesFilter(t, statusFilter, providerVal, q));
+    if (filtered.length === 0) {
+      statsBody.innerHTML = '<tr><td colspan="5">No transactions</td></tr>';
+      return;
+    }
+    // render rows (keep amount formatting)
+    filtered.forEach(t => {
+      const tr = document.createElement('tr');
+      tr.className = 'txn-row';
+      tr.innerHTML = `
+        <td>${t.date || ''}</td>
+        <td>${t.to || ''}</td>
+        <td style="text-align:right">₹${(Number(t.amount) || 0).toFixed(2)}</td>
+        <td>${t.provider || ''}</td>
+        <td class="status-${(t.status||'').toLowerCase()}">${t.status||''}</td>
+      `;
+      statsBody.appendChild(tr);
+    });
+  }
+
+  function renderAll() {
+    const s = summarize(transactions);
+    renderSummary(s);
+    // default render: all
+    const activeStatus = document.querySelector('.tab.active')?.dataset.status || 'all';
+    renderTable(activeStatus, providerFilter.value, txnSearch.value.trim());
+  }
+
+  // Tab clicks
+  tabs.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabs.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderTable(btn.dataset.status, providerFilter.value, txnSearch.value.trim());
+    });
+  });
+
+  providerFilter.addEventListener('change', () => {
+    const activeStatus = document.querySelector('.tab.active')?.dataset.status || 'all';
+    renderTable(activeStatus, providerFilter.value, txnSearch.value.trim());
+  });
+
+  txnSearch.addEventListener('input', () => {
+    const activeStatus = document.querySelector('.tab.active')?.dataset.status || 'all';
+    renderTable(activeStatus, providerFilter.value, txnSearch.value.trim());
+  });
+
+  // initial load
+  await loadTransactions();
+});
+</script>
+{% endblock %}

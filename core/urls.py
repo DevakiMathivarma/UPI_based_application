@@ -26,5 +26,6 @@ urlpatterns = [
     path('i-paid/', views.i_paid, name='i_paid'),
     path('transaction/', views.transactions_view, name='transactions_view'),
     path('transactions/<int:txn_id>/', views.transaction_detail, name='transaction_detail'),
+    path('transactions/stats/', views.transaction_stats, name='txn_stats'),
 
 ]

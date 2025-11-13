@@ -1342,3 +1342,10 @@ def transaction_detail(request, txn_id):
 #     p.save()
 #     return response
 
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def transaction_stats(request):
+    # page loads, the JS will fetch actual transactions via your existing AJAX view
+    return render(request, 'core/txn_stats.html')
