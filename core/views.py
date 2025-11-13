@@ -98,7 +98,7 @@ def register_view(request):
         send_email_otp(user, purpose='REGISTER')
 
     messages.success(request, f"Account created! OTP sent to {email} for verification.")
-    return redirect(f"{reverse('core:login')}?username={username}")
+    return redirect(f"{reverse('core:login_view')}?username={username}")
 
 
 
@@ -479,7 +479,7 @@ def home_view(request):
 #         create_mobile_otp_and_send(user, purpose='REGISTER')
 
 #     messages.success(request, f"OTP sent to {phone}. Please enter username and OTP to login.")
-#     return redirect(f"{reverse('core:login')}?username={username}")
+#     return redirect(f"{reverse('core:login_view')}?username={username}")
 
 
 # def login_view(request):
@@ -872,6 +872,8 @@ def create_order_view(request):
     })
 
 from django.core.mail import send_mail
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 
 @require_POST
 def i_paid(request):
@@ -879,9 +881,26 @@ def i_paid(request):
     Confirm payment by txn_num sent from browser localStorage.
     Expects JSON body: {"txn_num": "TXN..."}
     """
+    # message = Mail(
+    # from_email='mathivarmaganesan@gmail.com',
+    # to_emails='devakimathivarma@gmail.com',
+    # subject='Sending with Twilio SendGrid is Fun',
+    # html_content='<strong>and easy to do anywhere, even with Python</strong>')
+    # try:
+    #     import os
+    #     sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+    #     # sg.set_sendgrid_data_residency("eu")
+    #     # uncomment the above line if you are sending mail using a regional EU subuser
+    #     response = sg.send(message)
+    #     print(response.status_code)
+    #     print(response.body)
+    #     print(response.headers)
+    # except Exception as e:
+    #     print(e)
     try:
         payload = json.loads(request.body.decode('utf-8'))
         txn_num = payload.get('txn_numb')
+        
     except Exception:
         return JsonResponse({'ok': False, 'message': 'Invalid request'}, status=400)
 
@@ -900,6 +919,7 @@ def i_paid(request):
     # send email (customize recipients)
     try:
         logger.info(settings.DEFAULT_FROM_EMAIL)
+        print(settings.DEFAULT_FROM_EMAIL)
         logger.info(settings.DEFAULT_NOTIFICATION_EMAIL)
         logger.info(settings.EMAIL_HOST_PASSWORD)
         logger.info(settings.EMAIL_HOST_USER)
@@ -907,6 +927,10 @@ def i_paid(request):
         message=f'User {request.user} confirmed payment for {txn.to_upi}. Txn: {txn.txn_num}'
         logger.info(subject)
         logger.info(message)
+        import os
+
+
+
         res = send_mail(
             subject=subject,
             message=message,
@@ -1363,3 +1387,28 @@ from django.contrib.auth.decorators import login_required
 def transaction_stats(request):
     # page loads, the JS will fetch actual transactions via your existing AJAX view
     return render(request, 'core/txn_stats.html')
+
+
+# core/views.py (snippet)
+# from django.contrib import messages
+# from django.shortcuts import redirect
+# import logging
+# from core.utils import send_via_sendgrid
+# logger = logging.getLogger(__name__)
+
+# def i_paid(request):
+#     print('coming')
+#     user = request.user
+#     to_email = user.email
+#     subject = "Your OTP"
+#     otp = request.session.get("otp", "000000")
+#     message = f"Your OTP is: {otp}"
+
+#     try:
+#         send_via_sendgrid(subject, message, to_email)
+#         messages.success(request, "OTP sent to your email.")
+#     except Exception as e:
+#         logger.exception("SendGrid API error sending OTP")
+#         messages.error(request, "Unable to send OTP right now.")
+#     return redirect("core:login")
+

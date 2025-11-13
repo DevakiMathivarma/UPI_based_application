@@ -45,6 +45,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'core',
 ]
+INSTALLED_APPS += ["anymail"]   # make sure "INSTALLED_APPS" exists above
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -134,24 +136,26 @@ if not ALLOWED_HOSTS:
 # EMAIL_PORT = 587
 # EMAIL_USE_TLS = True           # or EMAIL_USE_SSL = True with port 465
 # EMAIL_HOST_USER = 'mathivarmaganesan@gmail.com'
-# EMAIL_HOST_PASSWORD = 'ryib qgbq lktw iwhfd'
+# EMAIL_HOST_PASSWORD = 'xniz lxre kpip eema'
 # DEFAULT_FROM_EMAIL = 'devakimathivarma@gmail.com'
 
 import os
-
+ANYMAIL = {
+    "SENDGRID_API_KEY": os.environ.get("SENDGRID_API_KEY"),
+}
 # --- Email (use env vars) ---
-EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+DEFAULT_NOTIFICATION_EMAIL='devakimathivarma@gmail.com'
+EMAIL_HOST = "smtp.sendgrid.net"
+EMAIL_PORT = 587                   # TLS port
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = "apikey"         # This is literally the username
+EMAIL_HOST_PASSWORD = os.environ.get("SENDGRID_SMTP_PASSWORD")
+DEFAULT_FROM_EMAIL = "mathivarmaganesan@gmail.com"
 
-# For Gmail / general SMTP
-EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
-EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
-EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'   # True for port 587
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')   # e.g. "you@gmail.com"
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')  # store in env or secret manager
-
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER or 'noreply@yourdomain.com')
-DEFAULT_NOTIFICATION_EMAIL = os.getenv('DEFAULT_NOTIFICATION_EMAIL', DEFAULT_FROM_EMAIL)
-
+RAZORPAY_KEY_ID = "rzp_test_RP0oCMXlRICgfK"
+RAZORPAY_KEY_SECRET = "9YwbHS9EcZnPl9Kkivo8Wa7L"
+SENDGRID_API_KEY=os.environ.get("SENDGRID_API_KEY")
 
 
 
