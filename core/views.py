@@ -243,7 +243,10 @@ def resend_otp_view(request):
     # Send OTP via email
     subject = "Your GapyPay Login OTP"
     message = f"Dear {user.username},\n\nYour new OTP is: {otp_code}\nIt will expire in 5 minutes.\n\nThanks,\nGapyPay Team"
-    send_mail(subject, message, "noreply@gapypay.com", [user.email], fail_silently=False)
+    try:
+        send_mail(subject, message, "mathivarmaganesan@gmail.com", [user.email], fail_silently=False)
+    except Exception as e:
+        print(e)
 
     print(f"[EMAIL RESEND OTP] Sent to {user.email} | OTP: {otp_code}")
 
