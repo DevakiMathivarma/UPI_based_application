@@ -881,22 +881,22 @@ def i_paid(request):
     Confirm payment by txn_num sent from browser localStorage.
     Expects JSON body: {"txn_num": "TXN..."}
     """
-    # message = Mail(
-    # from_email='mathivarmaganesan@gmail.com',
-    # to_emails='devakimathivarma@gmail.com',
-    # subject='Sending with Twilio SendGrid is Fun',
-    # html_content='<strong>and easy to do anywhere, even with Python</strong>')
-    # try:
-    #     import os
-    #     sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
-    #     # sg.set_sendgrid_data_residency("eu")
-    #     # uncomment the above line if you are sending mail using a regional EU subuser
-    #     response = sg.send(message)
-    #     print(response.status_code)
-    #     print(response.body)
-    #     print(response.headers)
-    # except Exception as e:
-    #     print(e)
+    message = Mail(
+    from_email='mathivarmaganesan@gmail.com',
+    to_emails='devakimathivarma@gmail.com',
+    subject='Sending with Twilio SendGrid is Fun',
+    html_content='<strong>and easy to do anywhere, even with Python</strong>')
+    try:
+        import os
+        sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+        # sg.set_sendgrid_data_residency("eu")
+        # uncomment the above line if you are sending mail using a regional EU subuser
+        response = sg.send(message)
+        print(response.status_code)
+        print(response.body)
+        print(response.headers)
+    except Exception as e:
+        print(e)
     try:
         payload = json.loads(request.body.decode('utf-8'))
         txn_num = payload.get('txn_numb')
