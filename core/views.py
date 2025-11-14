@@ -95,9 +95,9 @@ def register_view(request):
         user.set_password(password)
         user.save()
 
-        send_email_otp(user, purpose='REGISTER')
+       # send_email_otp(user, purpose='REGISTER')
 
-    messages.success(request, f"Account created! OTP sent to {email} for verification.")
+    messages.success(request, f"Account created! Please Login")
     return redirect(f"{reverse('core:login_view')}?username={username}")
 
 
@@ -892,9 +892,9 @@ def i_paid(request):
         # sg.set_sendgrid_data_residency("eu")
         # uncomment the above line if you are sending mail using a regional EU subuser
         response = sg.send(message)
-        print(response.status_code)
-        print(response.body)
-        print(response.headers)
+        # print(response.status_code)
+        # # print(response.body)
+        # print(response.headers)
     except Exception as e:
         print(e)
     try:
@@ -918,31 +918,28 @@ def i_paid(request):
 
     # send email (customize recipients)
     try:
-        logger.info(settings.DEFAULT_FROM_EMAIL)
-        print(settings.DEFAULT_FROM_EMAIL)
-        logger.info(settings.DEFAULT_NOTIFICATION_EMAIL)
-        logger.info(settings.EMAIL_HOST_PASSWORD)
-        logger.info(settings.EMAIL_HOST_USER)
-        subject=f'Payment received: {txn.txn_num} — ₹{txn.amount}'
-        message=f'User {request.user} confirmed payment for {txn.to_upi}. Txn: {txn.txn_num}'
-        logger.info(subject)
-        logger.info(message)
-        import os
+        subject = f'Payment received: {txn.txn_num} — ₹{txn.amount}'
+        message_text = f'User {request.user} confirmed payment for {txn.to_upi}. Txn: {txn.txn_num}'
 
-
-
-        res = send_mail(
-            subject=subject,
-            message=message,
+        mail = Mail(
             from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[settings.DEFAULT_NOTIFICATION_EMAIL],   # send to yourself to verify
-            fail_silently=False,
-        )
+            to_emails=settings.DEFAULT_NOTIFICATION_EMAIL,  # send to yourself/dev email
+            subject=subject,
+            html_content=f"<pre>{message_text}</pre>"
+            )
+
+        sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+        print('about tosend')
+        sg.send(mail)   # ← no storing, no printing, no response needed
+        print('about sent')
+
+        messages.success(request, "Marked paid and email notification sent.")
     except Exception as e:
         # email failure does not prevent success; report it optionally
         return JsonResponse({'ok': False, 'message': 'Marked paid but failed to send email', 'error': str(e)}, status=500)
 
     return JsonResponse({'ok': True, 'message': 'Marked paid'})
+
 
 
 @login_required
