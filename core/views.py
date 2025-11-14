@@ -639,7 +639,6 @@ import razorpay
 
 
 def create_order_razor_view(request):
-    logger.info('hey')
     if request.method != 'POST':
         return HttpResponseBadRequest("POST required")
 
@@ -660,7 +659,8 @@ def create_order_razor_view(request):
         amount=amount,
         to_upi=to_upi,
         provider=provider_pref,
-        status=Transaction.STATUS_PENDING
+        status=Transaction.STATUS_PENDING,
+        created_at=timezone.now()
     )
 
     amount_paise = int(amount * Decimal('100'))
@@ -855,6 +855,7 @@ def create_order_view(request):
         to_upi=to_upi,
         provider=provider_pref,
         status=Transaction.STATUS_PENDING,
+        created_at=timezone.now(),
         txn_num=txn_num or None
     )
 
@@ -1083,9 +1084,11 @@ from .models import Operator, RechargePlan, RechargeOrder
 
 # ---------------- Dashboard ----------------
 def dashboard_view(request):
+    user = request.user
+    recent_txns = user.transactions.order_by('-created_at')[:20]
     operators = Operator.objects.all()[:6]
     recent = RechargeOrder.objects.order_by('-created_at')[:6]
-    return render(request, "core/dashboard.html", {"operators": operators, "recent": recent,'razorpay_key_id': settings.RAZORPAY_KEY_ID})
+    return render(request, "core/dashboard.html", {"operators": operators, "recent": recent,'razorpay_key_id': settings.RAZORPAY_KEY_ID,'recent_txns':recent_txns})
 
 
 # ---------------- Recharge page ----------------
@@ -1409,3 +1412,60 @@ def transaction_stats(request):
 #         messages.error(request, "Unable to send OTP right now.")
 #     return redirect("core:login")
 
+# core/views.py (example)
+import json
+from django.http import JsonResponse, HttpResponseBadRequest
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt  # not needed if using CSRF token properly
+from django.utils.dateparse import parse_date
+from django.db.models import Q
+from .models import Transaction  # your model
+
+@require_POST
+def filter_transactions_api(request):
+    try:
+        payload = json.loads(request.body.decode('utf-8') or '{}')
+    except json.JSONDecodeError:
+        return HttpResponseBadRequest('Invalid JSON')
+
+    q = (payload.get('q') or '').strip()
+    date_from = parse_date(payload.get('date_from'))  # returns None if invalid
+    date_to = parse_date(payload.get('date_to'))
+    status = (payload.get('status') or '').strip().lower()
+
+    qs = Transaction.objects.all()
+
+    if q:
+        # search in UPI id, txn id, receiver name, provider — adjust fields
+        qs = qs.filter(
+            Q(to_upi__icontains=q) |
+            Q(txn_num__icontains=q) |
+            Q(provider__icontains=q) |
+            Q(amount__icontains=q)
+        )
+
+    if date_from:
+        qs = qs.filter(created_at__date__gte=date_from)  # if date is DateTimeField
+    if date_to:
+        qs = qs.filter(created_at__date__lte=date_to)
+
+    if status:
+        qs = qs.filter(status__iexact=status)
+
+    # order and limit results (optional)
+    qs = qs.order_by('-created_at')[:200]
+
+    # build JSON response
+    transactions = []
+    for t in qs:
+        transactions.append({
+            'id': t.id,
+            'date': t.created_at.strftime('%Y-%m-%d %H:%M') if t.created_at else '',
+            'to': t.to_upi,
+            'txn_id': t.txn_num,
+            'amount': float(t.amount),
+            'provider': t.provider,
+            'status': t.status.lower()
+        })
+
+    return JsonResponse({'transactions': transactions})

@@ -1,4 +1,4 @@
-.dashboard-wrap{ padding:18px 0; }
+.dashboard-wrap{ padding:25px 0; }
 .dash-top-cards{ display:flex; gap:14px; margin-bottom:18px; }
 /* .card.small{ flex:1; padding:18px; } */
 /* Minimal yet attractive card design */
@@ -8,14 +8,15 @@
     border-radius: 14px;
 
     /* soft glass look */
-    background: rgba(255,255,255,0.45);
-    backdrop-filter: blur(10px);
+background: rgba(251, 233, 196, 0.45);  backdrop-filter: blur(10px);
 
     /* thin border */
     border: 1px solid rgba(0,0,0,0.05);
 
     /* subtle shadow */
-    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+box-shadow:
+  4px 8px 20px rgba(0, 120, 90, 0.08),
+  6px 12px 28px rgba(0, 0, 0, 0.06);
 
     /* animations */
     transition: 
@@ -26,7 +27,7 @@
 
 /* Hover interaction */
 .card.small:hover {
-    transform: translateY(-6px) scale(1.03);
+    transform: translateY(-10px) scale(1.03);
     box-shadow: 0 12px 28px rgba(0,0,0,0.12);
     border-color: rgba(0,0,0,0.12);
 }
@@ -37,9 +38,9 @@
     position: absolute;
     top: 0;
     left: 10%;
-    width: 80%;
-    height: 4px;
-    border-radius: 50px;
+    width: 85%;
+    height: 8px;
+    border-radius: 50%;
     background: linear-gradient(90deg,#ff9f1c,#ffd23f,#ff6b6b);
     opacity: 0.25;
     transition: opacity .3s ease;
@@ -101,15 +102,22 @@
   text-align: left;
   padding:8px 20px;
 }
+ 
 .txn-table th, .txn-table td{ padding:8px 10px; border-bottom:1px solid rgba(175, 172, 172, 0.03);text-align: left; } */
+ #transactionsSection .card{
+  width:850px;
+ }
 .txn-table{
   width:100%;
   border-collapse: collapse;
+background: rgba(251, 233, 196, 0.45);
+  border-radius: 30px;
+  padding: 30px;
 }
 
 .txn-table th,
 .txn-table td{
-  padding: 10px 16px;   /* SAME padding */
+  padding: 8px 16px;   /* SAME padding */
   text-align: left;
   border-bottom:1px solid rgba(175, 172, 172, 0.1);
 }
@@ -124,6 +132,7 @@
 /* Dark-theme payment modal (replace existing modal rules with this) */
 .modal{
   position:fixed;
+
   left:0; top:0; right:0; bottom:0;
   display:flex;
   align-items:center;
@@ -337,7 +346,7 @@
   background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
   border: 1px solid rgba(255,255,255,0.04);
   text-align:left;
-  color: #e9f2ff;
+  color: black;
   font-weight:600;
   cursor:pointer;
   box-shadow: 0 4px 12px rgba(2,6,10,0.6);
@@ -484,6 +493,124 @@
     border-radius: 6px;
 }
 
+/* filters */
+/* ======= Standalone Filter Panel (visual + animated) ======= */
+.txn-filter-panel{
+  width: 320px;
+  max-width: 92%;
+  border-radius: 14px;
+  padding: 16px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.92), rgba(245,252,250,0.78));
+  box-shadow: 0 20px 60px rgba(12,28,30,0.06);
+  border: 1px solid rgba(255,255,255,0.65);
+  backdrop-filter: blur(8px) saturate(1.03);
+  transform-origin: left top;
+  animation: filter-pop 560ms cubic-bezier(.2,.9,.28,1) both;
+  position: relative;
+  isolation: isolate;
+}
+
+  .txn-table-wrap {
+    max-height: 550px;     /* height of scroll area */
+    overflow-y: auto;      /* enables vertical scrolling */
+    overflow-x: hidden;    /* optional */
+    width: 100%;
+}
+
+/* header row */
+.txn-filter-panel .filter-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:8px;
+}
+.txn-filter-panel .filter-head h4{
+  margin:0; font-size:15px; font-weight:900; color:#334a4a;
+}
+
+/* close btn (for mobile) */
+.filter-close{
+  display:none;
+  border:0; background:transparent; font-size:18px; cursor:pointer; color: #8aa0a0;
+}
+@media (max-width:980px){ .filter-close{ display:block; } }
+
+/* content */
+.txn-filter-panel .filter-content{ display:flex; flex-direction:column; gap:10px; }
+.filter-label{ font-size:12px; color:#6d7c7a; font-weight:800; margin-bottom:4px; }
+.filter-input{
+  padding:10px 12px;
+  border-radius:10px;
+  border:1px solid rgba(16,24,32,0.06);
+  background: linear-gradient(180deg, rgba(255,255,255,0.88), rgba(250,250,252,0.8));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.56);
+  font-weight:700;
+}
+
+/* two-column date row */
+.filter-row{ display:flex; gap:10px; }
+.filter-col{ flex:1; }
+
+/* chips */
+.chips{ display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
+.chip{
+  padding:8px 12px; border-radius:999px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.9));
+  border:1px solid rgba(16,24,32,0.06);
+  font-weight:800; color:#263238; cursor:pointer;
+  transition: transform 220ms cubic-bezier(.2,.9,.28,1), box-shadow 220ms ease;
+}
+.chip:hover{ transform: translateY(-6px); box-shadow: 0 18px 40px rgba(10,30,30,0.06); }
+.chip.active{
+  background: linear-gradient(90deg,#ffb400,#ff9d00);
+  color:#111; box-shadow: 0 18px 60px rgba(255,157,0,0.12); transform: translateY(-6px) scale(1.02);
+}
+
+/* actions */
+.filter-actions{ display:flex; gap:10px; margin-top:8px; }
+.btn-apply{
+  padding:10px 14px; border-radius:10px; font-weight:900;
+  background: linear-gradient(180deg,#ffb400,#ff9d00); color:#111; border:0; cursor:pointer;
+  box-shadow: 0 12px 36px rgba(255,157,0,0.12);
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+.btn-apply:hover{ transform: translateY(-6px); box-shadow: 0 22px 60px rgba(255,157,0,0.16); }
+.btn-clear{
+  padding:10px 12px; border-radius:10px; font-weight:800;
+  background: linear-gradient(180deg, rgba(255,255,255,0.94), rgba(250,250,252,0.9));
+  border:1px solid rgba(16,24,32,0.06); cursor:pointer;
+}
+.filter-tip{ font-size:12px; color:#99a3a8; margin-top:8px; }
+
+/* little animated accent wash */
+.txn-filter-panel::before{
+  content:"";
+  position:absolute; inset:-40% -20% -10% -40%;
+  background: radial-gradient(800px 400px at 12% 12%, rgba(0,200,170,0.06), transparent 30%);
+  filter: blur(32px) saturate(1.04); mix-blend-mode: screen; pointer-events:none; z-index:0;
+  animation: filter-wash 18s linear infinite;
+}
+.txn-filter-panel > * { position: relative; z-index:2; }
+
+/* keyframes */
+@keyframes filter-pop { from{ opacity:0; transform: translateY(10px) scale(.995);} to{ opacity:1; transform:none; } }
+@keyframes filter-wash { 0%{ transform: translateX(-6%);} 50%{ transform: translateX(6%);} 100%{ transform: translateX(-6%);} }
+
+/* accessibility */
+@media (prefers-reduced-motion: reduce){
+  .txn-filter-panel, .txn-filter-panel::before { animation:none !important; transition:none !important; }
+  .chip:hover, .btn-apply:hover { transform:none; box-shadow:none; }
+}
+
+.txnfilters{
+  display: flex;
+  width:100%;
+  margin: auto;
+  gap:30px;
+}
+/* filters end */
 
 /* ---------- Very small phones (320–374px) ---------- */
 @media (min-width:320px) and (max-width:374px) {
@@ -554,6 +681,10 @@
     font-size:14px !important;
     box-sizing:border-box;
   }
+  .input input::placeholder{
+    font-weight: 500;
+    color: gray;
+  }
   .btncolr { min-height:42px; border-radius:10px; }
 
   /* Reduce card pill size */
@@ -572,10 +703,12 @@
   #transactionsSection {
       width: 100%;
       overflow-x: auto;
+     
       -webkit-overflow-scrolling: touch;
       background-color: white;
       
   }
+
 
   /* Table must NOT be fixed layout */
   .txn-table {
@@ -585,6 +718,7 @@
         /* <-- IMPORTANT */
       font-size: 14px;
       border: none;
+      
   }
 
   /* Cells — allow natural width */
@@ -951,6 +1085,7 @@
 #transactionsSection .txn-table td:nth-child(3) {
     text-align: right !important;
 }
+/* clickable transaction rows */
 
 
 }
@@ -961,4 +1096,491 @@
   .payment-grid{ flex-direction:column; gap:12px; }
   .modal-inner{ padding:16px; border-radius:12px; }
   #qrImg{ width:220px; height:220px; margin:0 auto; }
+}
+
+.txn-row { cursor: pointer; transition: background 180ms ease, transform 180ms ease; }
+.txn-row:hover { background: linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.015)); transform: translateY(-1px); }
+
+/* optional visual loading state (brief highlight while fetching) */
+.txn-row.txn-loading { opacity: 0.85; filter: blur(0.2px); transform: scale(0.998); }
+.chip--active { background:#0b74ff; color:#fff; }
+.txn-row::before {
+  content: none !important;
+}
+/* ===========================
+   Light / Pastel dashboard skin
+   - Drop-in: paste at end of core/css/dashboard.css
+   - No HTML changes required (no id/class modifications)
+   =========================== */
+
+:root{
+  --bg-1: 250, 252, 255;        /* page background (very light) */
+  --bg-2: 241, 248, 255;        /* soft gradient */
+  --card-bg: 255, 255, 255;     /* card background */
+  --muted-ink: 42, 52, 65;      /* text */
+  --accent-1: 99, 102, 241;     /* indigo */
+  --accent-2: 16, 185, 129;     /* green */
+  --accent-3: 249, 115, 22;     /* orange */
+  --glass-opa: 0.85;            /* card opacity over light bg */
+  --soft-shadow: 0 10px 30px rgba(16,24,40,0.06);
+  --card-radius: 12px;
+  --transition-fast: 220ms;
+  --icon-size: 56px;
+  --icon-sm: 36px;
+}
+
+/* page background - airy pastel */
+body {
+  background: radial-gradient(800px 420px at 10% 8%, rgba(var(--accent-2),0.06), transparent 18%),
+              radial-gradient(700px 360px at 92% 82%, rgba(var(--accent-1),0.06), transparent 18%),
+              linear-gradient(180deg, rgb(var(--bg-1)) 0%, rgb(var(--bg-2)) 100%);
+  color: rgb(var(--muted-ink));
+  font-synthesis: none;
+}
+
+/* local stacking for decorations */
+.dashboard-wrap {
+  position: relative;
+  z-index: 1;
+}
+
+/* airy floating shapes behind content */
+.dashboard-wrap::before,
+.dashboard-wrap::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(28px) saturate(110%);
+  transform-origin: center;
+}
+
+/* left pastel blob */
+.dashboard-wrap::before {
+  left: -6%;
+  top: -6%;
+  width: 52%;
+  height: 420px;
+  background: radial-gradient(circle at 20% 20%, rgba(var(--accent-1),0.14), rgba(255,255,255,0.02) 30%, transparent 64%);
+  opacity: 0.95;
+  animation: softFloat 14s ease-in-out infinite;
+}
+
+/* right pastel blob */
+.dashboard-wrap::after {
+  right: -6%;
+  top: 8%;
+  width: 48%;
+  height: 360px;
+  background: radial-gradient(circle at 80% 80%, rgba(var(--accent-2),0.14), transparent 50%);
+  opacity: 0.95;
+  animation: softFloatAlt 18s ease-in-out infinite;
+}
+
+/* cards: white, subtle border & soft shadow */
+.card {
+  background: rgba(var(--card-bg), var(--glass-opa));
+  border-radius: var(--card-radius);
+  box-shadow: var(--soft-shadow);
+  border: 1px solid rgba(16,24,40,0.04);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  position: relative;
+  z-index: 2;
+}
+
+/* micro interaction */
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 22px 48px rgba(16,24,40,0.08);
+}
+
+/* headings: darker ink, subtle icon placed before */
+.card h3::before,
+.card h4::before,
+.card h5::before {
+  content: "";
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  margin-right: 10px;
+  vertical-align: middle;
+  background-size: 100% 100%;
+  opacity: 0.95;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.06));
+}
+
+/* Different heading icons depending on heading level (light SVGs) */
+.card h3::before {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%232a3441' fill-opacity='0.9' d='M12 2A10 10 0 1022 12 10.011 10.011 0 0012 2zm1 14h-2v-6h2zm0-8h-2V6h2z'/></svg>");
+}
+.card h4::before {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%2310636b' fill-opacity='0.95' d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zM11 9h2v6h-2zM11 17h2v2h-2z'/></svg>");
+}
+.card h5::before {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%23f97316' d='M12 2L2 7l10 5 10-5-10-5zm0 7.5L8 8.25v6.5L12 17l4-2.25v-6.5L12 9.5z'/></svg>");
+}
+
+/* subtle status pills tuned to light background */
+.status-pill.success { background: rgba(var(--accent-2),0.12); color: rgb(4,120,87); padding:6px 8px; border-radius:999px; font-weight:600; }
+.status-pill.pending { background: rgba(249, 115, 22,0.10); color: #92400e; padding:6px 8px; border-radius:999px; font-weight:600; }
+.status-pill.failed { background: rgba(239,68,68,0.08); color: #9b1c1c; padding:6px 8px; border-radius:999px; font-weight:600; }
+
+/* transactions table readability */
+.txn-table thead th {
+  background: transparent;
+  color: rgba(var(--muted-ink),0.9);
+  font-weight:700;
+  border-bottom: 1px solid rgba(16,24,40,0.06);
+}
+.txn-table tbody td {
+  color: rgba(var(--muted-ink),0.86);
+}
+
+/* pastel chips */
+.chips .chip {
+  background: rgba(16,24,40,0.03);
+  color: rgba(var(--muted-ink),0.9);
+  border-radius: 999px;
+  padding: 8px 12px;
+  border: 1px solid rgba(16,24,40,0.02);
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+.chips .chip--active {
+  background: linear-gradient(90deg, rgba(var(--accent-1),0.12), rgba(var(--accent-2),0.10));
+  transform: translateY(-2px);
+  border-color: rgba(var(--accent-1),0.14);
+  color: rgb(var(--accent-1));
+}
+
+/* floating icons visible on the page (data URIs) */
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.9;
+  filter: drop-shadow(0 6px 18px rgba(16,24,40,0.06));
+}
+
+/* large rupee-ish accent top-left */
+body::before {
+  left: 5%;
+  top: 12%;
+  width: calc(var(--icon-size) * 1.2);
+  height: calc(var(--icon-size) * 1.2);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%230f766e' fill-opacity='0.85' d='M12 2c-5 0-9 3.58-9 8s4 8 9 8 9-3.58 9-8-4-8-9-8zm1 11h-2v-2H9v-2h2V7h2v2h2v2h-2v2z'/></svg>");
+  background-size: 68% 68%;
+  background-position: 50% 50%;
+  animation: iconDrift 10s ease-in-out infinite;
+  opacity: 0.12;
+}
+
+/* small QR accent bottom-right */
+body::after {
+  right: 6%;
+  bottom: 6%;
+  width: calc(var(--icon-sm));
+  height: calc(var(--icon-sm));
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect x='3' y='3' width='6' height='6' fill='%2310636b'/><rect x='15' y='3' width='6' height='6' fill='%2310636b'/><rect x='3' y='15' width='6' height='6' fill='%2310636b'/><rect x='11' y='11' width='2' height='2' fill='%2310636b'/></svg>");
+  background-size: 70% 70%;
+  background-position: center;
+  opacity: 0.10;
+  transform: rotate(0deg);
+  animation: iconDriftAlt 12s ease-in-out infinite;
+}
+
+/* extra card-left icon cluster near recharge card (no DOM change) */
+.recharge-card::before {
+  content: "";
+  position: absolute;
+  left: -18px;
+  top: -18px;
+  width: 72px;
+  height: 72px;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%23f97316' d='M12 2L2 7l10 5 10-5-10-5zm0 7.5L8 8.25v6.5L12 17l4-2.25v-6.5L12 9.5z'/></svg>");
+  background-size: 76% 76%;
+  opacity: 0.08;
+  filter: blur(0.5px);
+  transform: rotate(-6deg);
+}
+
+/* ensure modals remain above decorations */
+.modal, .modal-inner, .txn-modal, .card-inner, .dash-top-cards, .txn-table {
+  z-index: 3;
+  position: relative;
+}
+
+/* utility: softened form inputs to match light theme */
+.input, .filter-input {
+  background: #fff;
+  border: 1px solid rgba(16,24,40,0.06);
+  box-shadow: 0 2px 8px rgba(16,24,40,0.02);
+  color: rgb(var(--muted-ink));
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+/* small button polish */
+.btncolr, .btn, .btn.primary {
+  border-radius: 8px;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  box-shadow: 0 6px 18px rgba(16,24,40,0.04);
+}
+.btncolr:hover, .btn.primary:hover { transform: translateY(-3px); }
+
+/* responsive adjustments */
+@media (max-width: 720px) {
+  body::before { display: none; }
+  .dashboard-wrap::before, .dashboard-wrap::after { display: none; }
+  .card { border-radius: 10px; }
+}
+
+/* prefer-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-wrap::before,
+  .dashboard-wrap::after,
+  body::before,
+  body::after,
+  .recharge-card::before {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* animations */
+@keyframes softFloat {
+  0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 0.95; }
+  50% { transform: translateY(-14px) rotate(1deg) scale(1.01); opacity: 0.9; }
+  100% { transform: translateY(0) rotate(0deg) scale(1); opacity: 0.95; }
+}
+@keyframes softFloatAlt {
+  0% { transform: translateY(0) rotate(-2deg) scale(1); opacity: 0.95; }
+  50% { transform: translateY(12px) rotate(2deg) scale(1.02); opacity: 0.9; }
+  100% { transform: translateY(0) rotate(-2deg) scale(1); opacity: 0.95; }
+}
+@keyframes iconDrift {
+  0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 0.12; }
+  50% { transform: translateY(-6px) rotate(6deg) scale(1.02); opacity: 0.18; }
+  100% { transform: translateY(0) rotate(0deg) scale(1); opacity: 0.12; }
+}
+@keyframes iconDriftAlt {
+  0% { transform: translateY(0) rotate(0deg); opacity: 0.10; }
+  50% { transform: translateY(8px) rotate(-6deg); opacity: 0.14; }
+  100% { transform: translateY(0) rotate(0deg); opacity: 0.10; }
+}
+/* ===== Combined: Modal overlay + Light Premium Popup =====
+   Drop-in: paste at the END of core/css/dashboard.css
+   Keeps all IDs and classes unchanged; strong overrides to ensure modal behavior + appearance
+   ===== */
+
+/* ---------- Overlay / positioning (ensure modal is overlay and centered) ---------- */
+.modal {
+  position: fixed !important;
+  inset: 0 !important;                     /* top:0; right:0; bottom:0; left:0 */
+  display: none;                           /* JS controls display:block — keep that behavior */
+  align-items: center;
+  justify-content: center;
+  z-index: 99999 !important;               /* very high to sit above everything */
+  background: rgba(255, 255, 255, 0.36) !important;  /* light scrim by default */
+  -webkit-backdrop-filter: blur(10px) saturate(160%) !important;
+  backdrop-filter: blur(10px) saturate(160%) !important;
+  padding: 20px;
+  box-sizing: border-box;
+  transition: opacity 180ms ease;
+}
+
+/* accept common 'open' states (some code toggles class instead of inline style) */
+.modal[style*="display:block"],
+.modal[style*="display: block"],
+.modal.open,
+.modal.show {
+  display: flex !important;
+  opacity: 1 !important;
+}
+
+/* ensure modals hidden remain hidden */
+.modal[style*="display:none"], .modal[style*="display: none"] {
+  display: none !important;
+}
+
+/* ---------- Modal inner / card: light & premium ---------- */
+.modal-inner {
+  background: rgba(255,255,255,0.96) !important;   /* bright, slightly off-white */
+  color: #111827 !important;                       /* dark readable text */
+  border-radius: 14px !important;
+  border: 1px solid rgba(200,200,215,0.55) !important;
+  box-shadow:
+    0 14px 44px rgba(9, 30, 80, 0.12),
+    0 4px 12px rgba(9, 30, 80, 0.06);
+  padding: 22px !important;
+  max-width: 980px !important;
+  width: calc(100% - 48px) !important;
+  max-height: 92vh !important;
+  overflow: auto !important;
+  position: relative !important;
+  z-index: 100000 !important;                      /* ensure modal-inner sits above overlay */
+  box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Slight top accent bar for premium feel (optional, subtle) */
+.modal-inner::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 4px;
+  border-top-left-radius: 14px;
+  border-top-right-radius: 14px;
+  background: linear-gradient(90deg, rgba(78,115,223,0.95), rgba(16,185,129,0.95));
+  opacity: 0.08;
+  pointer-events: none;
+  z-index: 100001;
+}
+
+/* Header text color override */
+.modal-inner h3,
+.modal-inner h4,
+.modal-inner h5 {
+  color: #0f1724 !important;
+  margin-top: 0;
+}
+
+/* ---------- Close button ---------- */
+.modal .modal-close {
+  background: rgba(255,255,255,0.95) !important;
+  border-radius: 50% !important;
+  width: 36px !important;
+  height: 36px !important;
+  font-size: 18px !important;
+  color: #1f2937 !important;
+  border: 1px solid rgba(10,10,12,0.06) !important;
+  box-shadow: 0 6px 16px rgba(15,23,42,0.08) !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+  position: relative;
+  z-index: 100010 !important;
+}
+.modal .modal-close:hover { transform: scale(1.06); box-shadow: 0 10px 26px rgba(15,23,42,0.12) !important; }
+
+/* ---------- Buttons inside modal ---------- */
+.modal-inner .btn {
+  background: #fff !important;
+  border: 1px solid rgba(12,16,24,0.06) !important;
+  color: #0b1220 !important;
+  border-radius: 8px !important;
+  padding: 10px 14px !important;
+  box-shadow: 0 6px 18px rgba(9,20,40,0.06) !important;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+.modal-inner .btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(8,18,40,0.08) !important;
+}
+
+/* Primary action inside modal */
+.modal-inner .btn.primary {
+  background: linear-gradient(180deg, #4e73df 0%, #3b5ad6 100%) !important;
+  border-color: #4e73df !important;
+  color: #fff !important;
+  box-shadow: 0 10px 30px rgba(78,115,223,0.32) !important;
+}
+.modal-inner .btn.primary:hover {
+  background: linear-gradient(180deg, #3d5ccb 0%, #2f4fc1 100%) !important;
+}
+
+/* ---------- Modal content specifics (txn modal) ---------- */
+/* JSON / raw viewer */
+#txn_raw {
+  background: #f7fafc !important;
+  border: 1px solid #e6e9ef !important;
+  padding: 12px !important;
+  border-radius: 10px !important;
+  color: #0f1724 !important;
+  max-height: 260px !important;
+  overflow: auto !important;
+}
+
+/* Timeline and meta text */
+#txn_timeline_list li,
+#txnMeta p,
+#txnSummary p {
+  color: #111827 !important;
+}
+
+/* Status badges tuned for light modal */
+#txnStatusBadge.badge-success {
+  background: #e9f9f0 !important;
+  color: #047857 !important;
+  padding: 6px 10px;
+  border-radius: 8px;
+  display: inline-block;
+}
+#txnStatusBadge.badge-warning {
+  background: #fff7e6 !important;
+  color: #b45309 !important;
+  padding: 6px 10px;
+  border-radius: 8px;
+  display: inline-block;
+}
+#txnStatusBadge.badge-failed {
+  background: #ffecec !important;
+  color: #9b1c1c !important;
+  padding: 6px 10px;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+/* ---------- Ensure decorations stay behind modal ---------- */
+body::before,
+body::after,
+.dashboard-wrap::before,
+.dashboard-wrap::after,
+.cards-wrap::before,
+.cards-wrap::after {
+  z-index: 1 !important;
+  pointer-events: none !important;
+}
+
+/* Also ensure .card and other UI elements don't accidentally overlap */
+.card, .dash-top-cards, .txn-table {
+  z-index: 3 !important;
+  position: relative !important;
+}
+
+/* ---------- Accessibility: focus styles inside modal ---------- */
+.modal-inner :focus {
+  outline: 3px solid rgba(78,115,223,0.16) !important;
+  outline-offset: 2px !important;
+}
+
+/* ---------- Mobile behavior ---------- */
+@media (max-width: 640px) {
+  .modal { padding: 8px !important; }
+  .modal-inner {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+  }
+  .modal .modal-close {
+    right: 8px;
+    top: 8px;
+    position: absolute;
+  }
+}
+
+/* ---------- Respect reduced-motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .modal, .modal-inner, .modal .modal-close, .modal-inner .btn {
+    transition: none !important;
+    animation: none !important;
+  }
 }

@@ -7,18 +7,6 @@
 
 <div class="dashboard-wrap container">
   <div class="dash-top-cards">
-    <!-- <div class="card small">
-      <h4>Balance</h4>
-      <p class="big">₹0.00</p>
-      <button class="btn btn-primary" id="addMoneyBtn">Add Money</button>
-    </div>
-
-    <div class="card small">
-      <h4>UPI ID</h4>
-      <p class="muted">mathivarma@icici</p>
-      <button class="btn btn-ghost" id="showQR">Show QR</button>
-    </div> -->
-
     <div class="card small">
       <h4>Quick Pay</h4>
       <form id="quickPayForm">
@@ -26,26 +14,32 @@
         <input name="to_upi" placeholder="UPI ID or phone" class="input" required>
         <input name="amount" placeholder="Amount (INR)" class="input" required>
         <button class="btncolr" type="submit">Pay</button>
-            <button id="scanQrBtn" type="button" class="btncolr" >Scan QR</button>
+        <button id="scanQrBtn" type="button" class="btncolr">Scan QR</button>
 
       </form>
     </div>
+    <div class="card small">
+      <form id="iPaidForm" style="margin-top:10px;">
+        {% csrf_token %}
+        <label for="txnInput" style="display:block;margin-bottom:5px;">Enter Transaction ID from UPI App</label>
+        <input id="txnInput" class="input" type="text" placeholder="e.g. TXN20251112ABC123" required
+          style="margin-bottom:10px;">
+        <button id="iPaidBtn" class="btncolr" type="button">I Paid</button>
+      </form>
+    </div>
+
+    <div id="qrContainer" class="card small" style="margin-top: 15px; text-align:center; display:none;">
+      <h5>Scan to Pay</h5>
+      <canvas id="upiQr"></canvas>
+    </div>
+
 
   </div>
-  <form id="iPaidForm" style="margin-top:10px;">
-  {% csrf_token %}
-  <label for="txnInput" style="display:block;margin-bottom:5px;">Enter Transaction ID from UPI App</label>
-  <input id="txnInput" class="input" type="text" placeholder="e.g. TXN20251112ABC123" required style="margin-bottom:10px;">
-  <button id="iPaidBtn" class="btncolr" type="button">I Paid</button>
-</form>
-  <div id="qrContainer" style="margin-top: 15px; text-align:center; display:none;">
-    <h5>Scan to Pay</h5>
-    <canvas id="upiQr"></canvas>
-  </div>
+
 </div>
 
 <section class="cards-wrap">
-  <div class="card recharge-card" id="rechargeCard">
+  <div class="card recharge-card" id="rechargeCard" style="display: none;">
     <div class="card-inner">
       <h3>Mobile Recharge</h3>
       <p>Instant recharge for mobiles, DTH & more.</p>
@@ -53,38 +47,93 @@
     </div>
   </div>
 
-  <div class="card stats-card">
+  <div class="card stats-card" style="display: none;">
     <div class="card-inner">
       <h3>Recent Orders</h3>
       <ul class="recent-list">
         {% for o in recent %}
-          <li>{{ o.mobile }} — ₹{{ o.amount }} — <span class="muted">{{ o.status }}</span></li>
+        <li>{{ o.mobile }} — ₹{{ o.amount }} — <span class="muted">{{ o.status }}</span></li>
         {% empty %}
-          <li class="muted">No recent orders</li>
+        <li class="muted">No recent orders</li>
         {% endfor %}
       </ul>
     </div>
   </div>
 </section>
-<div id="transactionsSection">
-  <div class="card">
-    <h3>Recent Transactions</h3>
-    <table class="txn-table">
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>To</th>
-          <th>Amount</th>
-          <th>Provider</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody id="txnBody">
-        <tr><td colspan="5">Loading...</td></tr>
-      </tbody>
-    </table>
+<!-- FILTERS PANEL (standalone) -->
+<section class="txnfilters">
+  <div id="txnFilterPanel" class="txn-filter-panel" aria-hidden="false">
+
+    <div class="filter-head">
+      <h4>Search & Filters</h4>
+      <button id="txnFilterClose" class="filter-close" aria-label="Close filters">✕</button>
+    </div>
+
+    <div class="filter-content">
+      <label class="filter-label">Search</label>
+      <input id="txnSearchInput" class="filter-input" type="search" placeholder="UPI / name / txn id">
+
+      <div class="filter-row">
+        <div class="filter-col">
+          <label class="filter-label">From</label>
+          <input id="txnDateFrom" class="filter-input" type="date">
+        </div>
+        <div class="filter-col">
+          <label class="filter-label">To</label>
+          <input id="txnDateTo" class="filter-input" type="date">
+        </div>
+      </div>
+
+      <label class="filter-label">Status</label>
+      <select id="txnStatusSelect" class="filter-input">
+        <option value="">All</option>
+        <option value="success">Success</option>
+        <option value="pending">Pending</option>
+        <option value="failed">Failed</option>
+      </select>
+
+      <div class="chips">
+        <button class="chip" data-status="">All</button>
+        <button class="chip" data-status="success">Success</button>
+        <button class="chip" data-status="pending">Pending</button>
+        <button class="chip" data-status="failed">Failed</button>
+      </div>
+
+      <div class="filter-actions">
+        <button id="txnApplyBtn" class="btn-apply">Apply</button>
+        <button id="txnClearBtn" class="btn-clear">Clear</button>
+      </div>
+
+      <div class="filter-tip">Tip: click chips for quick filtering — existing txn code can listen to the emitted event.
+      </div>
+    </div>
   </div>
-</div>
+
+  <div id="transactionsSection">
+    <div class="card">
+      <h3>Recent Transactions</h3>
+      <div class="txn-table-wrap">
+        <table class="txn-table">
+          <thead>
+            <tr>
+
+              <th>Date</th>
+              <th>To</th>
+              <th>Amount</th>
+              <th>Provider</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="txnBody">
+            <tr>
+              <td colspan="5">Loading...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
 </div>
 
 <!-- Payment Modal (hidden by default) -->
@@ -99,7 +148,7 @@
         <button class="method-btn" data-provider="phonepe">PhonePe</button>
         <button class="method-btn" data-provider="bhim">BHIM</button>
       </div>
-              <p><strong>To:</strong> <span id="summary_to"></span></p>
+      <p><strong>To:</strong> <span id="summary_to"></span></p>
 
       <div class="summary">
         <p><strong>To:</strong> <span id="summary_to"></span></p>
@@ -115,17 +164,20 @@
     <button class="modal-close" id="qrModalClose">×</button>
     <h3>Scan to pay with UPI</h3>
     <p id="qrNote">Open your UPI app (GPay/PhonePe/BHIM) and scan the QR or copy the UPI ID below.</p>
-    <img id="qrImg" src="" alt="UPI QR" style="width:260px;height:260px;border-radius:8px;display:block;margin:12px 0" />
+    <img id="qrImg" src="" alt="UPI QR"
+      style="width:260px;height:260px;border-radius:8px;display:block;margin:12px 0" />
     <div style="display:flex;gap:8px;align-items:center;">
-      <input id="upiText" readonly style="flex:1;padding:8px;border-radius:6px;border:1px solid #444;background:#0b0b0b;color:#fff" />
+      <input id="upiText" readonly
+        style="flex:1;padding:8px;border-radius:6px;border:1px solid #444;background:#0b0b0b;color:#fff" />
       <button id="copyUpiBtn" class="btn">Copy</button>
     </div>
-    <p style="margin-top:10px;font-size:0.9em;color:#bbb">After paying in your UPI app, refresh this page or use the app to confirm. You can also click "I paid" (if you add that flow) to poll the server for status.</p>
+    <p style="margin-top:10px;font-size:0.9em;color:#bbb">After paying in your UPI app, refresh this page or use the app
+      to confirm. You can also click "I paid" (if you add that flow) to poll the server for status.</p>
   </div>
 </div>
 
 <!-- ////////////////trans details///////////// -->
- <!-- Transaction Details Modal -->
+<!-- Transaction Details Modal -->
 <div id="txnModal" class="modal" style="display:none">
   <div class="modal-inner card">
     <button class="modal-close" id="txnModalClose">×</button>
@@ -171,21 +223,21 @@
 
 {% block scripts %}
 <!-- Razorpay checkout library -->
- <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
 <script>
-    const RAZORPAY_KEY = "{{ razorpay_key_id|default:''|escapejs }}";
+  const RAZORPAY_KEY = "{{ razorpay_key_id|default:''|escapejs }}";
   console.log("RAZORPAY_KEY (template):", RAZORPAY_KEY);
 
   if (!RAZORPAY_KEY) {
     console.error("Razorpay key missing in template context! Add 'razorpay_key': settings.RAZORPAY_KEY_ID in your dashboard view.");
   }
   function getCookie(name) {
-  const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
-  return v ? v.pop() : '';
-}
-    function genTxnNum() {
+    const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+    return v ? v.pop() : '';
+  }
+  function genTxnNum() {
     // TXN + YYYYMMDD + 6 random alnum uppercase
     const d = new Date();
     const yyyy = d.getFullYear().toString();
@@ -194,533 +246,952 @@
     const rand = Math.random().toString(36).slice(2, 8).toUpperCase();
     return `TXN${yyyy}${mm}${dd}${rand}`;
   }
-    const e = encodeURIComponent;
-//     function buildUpiUri({ pa, pn, amount, tn }) {
-//   return `upi://pay?pa=${e(pa)}&pn=${e(pn)}&tn=${e(tn)}&am=${e(amount)}&cu=INR`;
-// }
-document.addEventListener("DOMContentLoaded", async () => {
-  try {
-    const resp = await fetch("{% url 'core:transactions_view' %}", {
-      headers: { "X-Requested-With": "XMLHttpRequest" }
-    });
-    const data = await resp.json();
-    const tbody = document.getElementById("txnBody");
+  const e = encodeURIComponent;
+  //     function buildUpiUri({ pa, pn, amount, tn }) {
+  //   return `upi://pay?pa=${e(pa)}&pn=${e(pn)}&tn=${e(tn)}&am=${e(amount)}&cu=INR`;
+  // }
+  document.addEventListener("DOMContentLoaded", async () => {
+    try {
+      const resp = await fetch("{% url 'core:transactions_view' %}", {
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+      });
+      const data = await resp.json();
+      const tbody = document.getElementById("txnBody");
 
-    if (data.ok && data.transactions.length > 0) {
-      tbody.innerHTML = "";
-      data.transactions.forEach(t => {
-        const txnIdentifier = t.id ?? t.pk ?? t.txn_num ?? '';
-  // log for debugging in case it's empty
-  if(!txnIdentifier) console.warn('Transaction missing id/pk/txn_num:', t);
-        tbody.innerHTML += `
+      if (data.ok && data.transactions.length > 0) {
+        tbody.innerHTML = "";
+        data.transactions.forEach(t => {
+          const txnIdentifier = t.id ?? t.pk ?? t.txn_num ?? '';
+          console.log(txnIdentifier)
+          // log for debugging in case it's empty
+          if (!txnIdentifier) console.warn('Transaction missing id/pk/txn_num:', t);
+          tbody.innerHTML += `
            <tr class="txn-row" data-txn="${txnIdentifier}">
             <td>${t.date}</td>
             <td>${t.to}</td>
-            <td>₹${t.amount.toFixed(2)}</td>
+            <td>₹${t.amount.toFixed(2)}</td>                
             <td>${t.provider}</td>
             <td class="status-${t.status.toLowerCase()}">${t.status}</td>
           </tr>`;
-      });
-    } else {
-      tbody.innerHTML = `<tr><td colspan="5">No recent transactions</td></tr>`;
+        });
+      } else {
+        tbody.innerHTML = `<tr><td colspan="5">No recent transactions</td></tr>`;
+      }
+    } catch (err) {
+      console.error(err);
+      document.getElementById("txnBody").innerHTML =
+        `<tr><td colspan="5">Failed to load transactions</td></tr>`;
     }
-  } catch (err) {
-    console.error(err);
-    document.getElementById("txnBody").innerHTML =
-      `<tr><td colspan="5">Failed to load transactions</td></tr>`;
-  }
-});
-
-function buildUpiUri({ pa, pn, amount, tn, txn_num }) {
-  var txn_num = localStorage.getItem('pending_txn');
-  const note = `${tn} | TXN: ${txn_num}`; // shows txn number in payment note
-  return `upi://pay?pa=${e(pa)}&pn=${e(note)}&tn=${e(note)}&am=${e(amount)}&cu=INR`;
-}
-    function generateQrCode(text) {
-  const qrCanvas = document.getElementById("upiQr");
-  const qrContainer = document.getElementById("qrContainer");
-  qrContainer.style.display = "block";
-  const qr = new QRious({
-    element: qrCanvas,
-    value: text,
-    size: 200,
   });
-}
 
-// Handle Scan QR click
-
-(function(){
-  /* Elements */
-  const modal = document.getElementById('paymentModal');
-  const modalClose = document.getElementById('modalClose');
-  const quickPayForm = document.getElementById('quickPayForm');
-  const summaryTo = document.getElementById('summary_to');
-  const summaryAmt = document.getElementById('summary_amt');
-  const methodButtons = document.querySelectorAll('.method-btn');
-const showlink = document.getElementById('showlink');
-  const qrModal = document.getElementById('qrModal');
-  const qrModalClose = document.getElementById('qrModalClose');
-  const qrImg = document.getElementById('qrImg');
-  const upiText = document.getElementById('upiText');
-  const copyUpiBtn = document.getElementById('copyUpiBtn');
-
-  /* CSRF cookie helper */
-  function getCookie(name) {
-    const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
-    return v ? v.pop() : '';
+  function buildUpiUri({ pa, pn, amount, tn, txn_num }) {
+    var txn_num = localStorage.getItem('pending_txn');
+    const note = `${tn} | TXN: ${txn_num}`; // shows txn number in payment note
+    return `upi://pay?pa=${e(pa)}&pn=${e(note)}&tn=${e(note)}&am=${e(amount)}&cu=INR`;
   }
-  const csrftoken_cookie = getCookie('csrftoken');
-
-  /* Modal open/close helpers */
-  function openModal(to, amount){
-    summaryTo.textContent = to;
-    summaryAmt.textContent = amount;
-    modal.style.display = 'block';
-    modal.dataset.to = to;
-    modal.dataset.amount = amount;
+  function generateQrCode(text) {
+    const qrCanvas = document.getElementById("upiQr");
+    const qrContainer = document.getElementById("qrContainer");
+    qrContainer.style.display = "block";
+    const qr = new QRious({
+      element: qrCanvas,
+      value: text,
+      size: 200,
+    });
   }
-  function closeModal(){ modal.style.display = 'none'; }
 
-  modalClose.addEventListener('click', closeModal);
+  // Handle Scan QR click
 
-  quickPayForm.addEventListener('submit', async function(e){
-    e.preventDefault();
-    const to = quickPayForm.elements['to_upi'].value.trim();
-    const amount = quickPayForm.elements['amount'].value.trim();
-    if(!to || !amount) { alert('Enter recipient and amount'); return; }
+  (function () {
+    /* Elements */
+    const modal = document.getElementById('paymentModal');
+    const modalClose = document.getElementById('modalClose');
+    const quickPayForm = document.getElementById('quickPayForm');
+    const summaryTo = document.getElementById('summary_to');
+    const summaryAmt = document.getElementById('summary_amt');
+    const methodButtons = document.querySelectorAll('.method-btn');
+    const showlink = document.getElementById('showlink');
+    const qrModal = document.getElementById('qrModal');
+    const qrModalClose = document.getElementById('qrModalClose');
+    const qrImg = document.getElementById('qrImg');
+    const upiText = document.getElementById('upiText');
+    const copyUpiBtn = document.getElementById('copyUpiBtn');
+
+    /* CSRF cookie helper */
+    function getCookie(name) {
+      const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+      return v ? v.pop() : '';
+    }
+    const csrftoken_cookie = getCookie('csrftoken');
+
+    /* Modal open/close helpers */
+    function openModal(to, amount) {
+      summaryTo.textContent = to;
+      summaryAmt.textContent = amount;
+      modal.style.display = 'block';
+      modal.dataset.to = to;
+      modal.dataset.amount = amount;
+    }
+    function closeModal() { modal.style.display = 'none'; }
+
+    modalClose.addEventListener('click', closeModal);
+
+    quickPayForm.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const to = quickPayForm.elements['to_upi'].value.trim();
+      const amount = quickPayForm.elements['amount'].value.trim();
+      if (!to || !amount) { alert('Enter recipient and amount'); return; }
       const txnNum = genTxnNum();
-    localStorage.setItem('pending_txn', txnNum);
-    openModal(to, amount);
-     modal.dataset.txn = txnNum;
-  });
+      localStorage.setItem('pending_txn', txnNum);
+      openModal(to, amount);
+      modal.dataset.txn = txnNum;
+    });
 
 
     async function createOrder(amount, to, provider, txn_num) {
-    const token = document.querySelector('[name=csrfmiddlewaretoken]')?.value || csrftoken_cookie;
-    const fd = new FormData();
-    fd.append('amount', amount);
-    fd.append('to_upi', to);
-    fd.append('provider', provider);
-    if (txn_num) fd.append('txn_num', txn_num);            // <-- new
-    const resp = await fetch("{% url 'core:create_order' %}", {
-      method: 'POST',
-      headers: {'X-CSRFToken': token},
-      body: fd,
-      credentials: 'same-origin'
-    });
-    console.log("createOrder response:", resp);
-    return resp.json();
-  }
-document.getElementById("scanQrBtn").addEventListener("click", () => {
-  const form = document.getElementById("quickPayForm");
-  const to_upi = form.to_upi.value.trim();
-  const amount = form.amount.value.trim();
+      const token = document.querySelector('[name=csrfmiddlewaretoken]')?.value || csrftoken_cookie;
+      const fd = new FormData();
+      fd.append('amount', amount);
+      fd.append('to_upi', to);
+      fd.append('provider', provider);
+      if (txn_num) fd.append('txn_num', txn_num);            // <-- new
+      const resp = await fetch("{% url 'core:create_order' %}", {
+        method: 'POST',
+        headers: { 'X-CSRFToken': token },
+        body: fd,
+        credentials: 'same-origin'
+      });
+      console.log("createOrder response:", resp);
+      return resp.json();
+    }
+    document.getElementById("scanQrBtn").addEventListener("click", () => {
+      const form = document.getElementById("quickPayForm");
+      const to_upi = form.to_upi.value.trim();
+      const amount = form.amount.value.trim();
 
-  if (!to_upi || !amount) {
-    alert("Please fill both UPI ID and amount before generating QR.");
-    return;
-  }
-    const txnNum = genTxnNum();
-    localStorage.setItem('pending_txn', txnNum);
+      if (!to_upi || !amount) {
+        alert("Please fill both UPI ID and amount before generating QR.");
+        return;
+      }
+      const txnNum = genTxnNum();
+      localStorage.setItem('pending_txn', txnNum);
 
-  const upiLink = buildUpiUri({
-    pa: to_upi,
-    pn: "User",
-    amount: amount,
-    tn: "From App",
-  });
+      const upiLink = buildUpiUri({
+        pa: to_upi,
+        pn: "User",
+        amount: amount,
+        tn: "From App",
+      });
 
-  console.log("Generated UPI URI:", upiLink);
-  generateQrCode(upiLink);
+      console.log("Generated UPI URI:", upiLink);
+      generateQrCode(upiLink);
 
-        let res;
+      let res;
       try {
-        res =  createOrder(amount, to_upi, "UPI",txnNum);
+        res = createOrder(amount, to_upi, "UPI", txnNum);
       } catch (err) {
         console.error(err);
         alert('Order creation failed');
         return;
       }
-});
-  /* Razorpay checkout handler (keeps your existing flow) */
-   async function openRazorpay(order_id, amount_paise, txn_id, name, phone){
-    const options = {
-      "key": RAZORPAY_KEY ,              // <-- standardized var name
-      "amount": amount_paise,
-      "currency": "INR",
-      "order_id": order_id,
-      "name": name || "{{ user.username }}",
-      "prefill": {
-        "name": "{{ user.username }}",
-        "email": "{{ user.email|default:'' }}",
-        "contact": "{{ user.phone_number|default:'' }}"
-      },
-      "handler": function (response){
-        const data = new FormData();
-        data.append('razorpay_payment_id', response.razorpay_payment_id);
-        data.append('razorpay_order_id', response.razorpay_order_id);
-        data.append('razorpay_signature', response.razorpay_signature);
-        data.append('txn_id', txn_id || '');
-        fetch("{% url 'core:verify_payment' %}", {
-          method: 'POST',
-          headers: {'X-CSRFToken': localCsrfToken()},
-          body: data,
-          credentials: 'same-origin'
-        }).then(r => r.json()).then(j => {
-          if(j.ok){
-            alert('Payment successful');
-            window.location.reload();
-          } else {
-            alert('Payment verification failed: ' + (j.message || ''));
-            window.location.reload();
-          }
-        }).catch(err => { console.error(err); alert('Verification error'); });
-      },
-      "modal": { "ondismiss": function(){ /* allow retry */ } }
-    };
-    const rzp = new Razorpay(options);
-    rzp.open();
-  }
+    });
+    /* Razorpay checkout handler (keeps your existing flow) */
+    async function openRazorpay(order_id, amount_paise, txn_id, name, phone) {
+      const options = {
+        "key": RAZORPAY_KEY,              // <-- standardized var name
+        "amount": amount_paise,
+        "currency": "INR",
+        "order_id": order_id,
+        "name": name || "{{ user.username }}",
+        "prefill": {
+          "name": "{{ user.username }}",
+          "email": "{{ user.email|default:'' }}",
+          "contact": "{{ user.phone_number|default:'' }}"
+        },
+        "handler": function (response) {
+          const data = new FormData();
+          data.append('razorpay_payment_id', response.razorpay_payment_id);
+          data.append('razorpay_order_id', response.razorpay_order_id);
+          data.append('razorpay_signature', response.razorpay_signature);
+          data.append('txn_id', txn_id || '');
+          fetch("{% url 'core:verify_payment' %}", {
+            method: 'POST',
+            headers: { 'X-CSRFToken': localCsrfToken() },
+            body: data,
+            credentials: 'same-origin'
+          }).then(r => r.json()).then(j => {
+            if (j.ok) {
+              alert('Payment successful');
+              window.location.reload();
+            } else {
+              alert('Payment verification failed: ' + (j.message || ''));
+              window.location.reload();
+            }
+          }).catch(err => { console.error(err); alert('Verification error'); });
+        },
+        "modal": { "ondismiss": function () { /* allow retry */ } }
+      };
+      const rzp = new Razorpay(options);
+      rzp.open();
+    }
 
-  /* Helpers: encoding / UPI URI builders / mobile detect */
-  function e(s){ return encodeURIComponent(s || ''); }
-  // function buildUpiUri({ pa, pn, amount, tn }){
-  //   return `upi://pay?pa=${e(pa)}&pn=${e(pn)}&tn=${e(tn)}&am=${e(amount)}&cu=INR`;
-  // }
-  function buildGPayIntentUri({ pa, pn, amount, tn }){
-    console.log('coming')
-    const base = `upi://pay?pa=${e(pa)}&pn=${e(pn)}&tn=${e(tn)}&am=${e(amount)}&cu=INR`;
-    const url= `intent://${base.replace(/^upi:\/\//,'') }#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;end`;
-    console.log(base)
-        console.log(url)
+    /* Helpers: encoding / UPI URI builders / mobile detect */
+    function e(s) { return encodeURIComponent(s || ''); }
+    // function buildUpiUri({ pa, pn, amount, tn }){
+    //   return `upi://pay?pa=${e(pa)}&pn=${e(pn)}&tn=${e(tn)}&am=${e(amount)}&cu=INR`;
+    // }
+    function buildGPayIntentUri({ pa, pn, amount, tn }) {
+      console.log('coming')
+      const base = `upi://pay?pa=${e(pa)}&pn=${e(pn)}&tn=${e(tn)}&am=${e(amount)}&cu=INR`;
+      const url = `intent://${base.replace(/^upi:\/\//, '')}#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;end`;
+      console.log(base)
+      console.log(url)
 
-    return url;
-  }
-  function isMobile() {
-    try {
-      if (navigator.userAgentData && typeof navigator.userAgentData.mobile === 'boolean') {
-        return navigator.userAgentData.mobile;
-      }
-    } catch(e){}
-    return /Mobi|Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-  }
+      return url;
+    }
+    function isMobile() {
+      try {
+        if (navigator.userAgentData && typeof navigator.userAgentData.mobile === 'boolean') {
+          return navigator.userAgentData.mobile;
+        }
+      } catch (e) { }
+      return /Mobi|Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+    }
 
-  /* Improved QR modal functions (robust + graceful fallback) */
-  function showQrModal(upiUri, paDisplay){
-    try {
-      // Build QR URL using Google Charts (ensure proper encoding)
-      const qrData = encodeURIComponent(upiUri);
-      const qrUrl = `https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=${qrData}`;
+    /* Improved QR modal functions (robust + graceful fallback) */
+    function showQrModal(upiUri, paDisplay) {
+      try {
+        // Build QR URL using Google Charts (ensure proper encoding)
+        const qrData = encodeURIComponent(upiUri);
+        const qrUrl = `https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=${qrData}`;
 
-      // Debug logs (open console to inspect)
-      console.log('Generated UPI URI:', upiUri);
-      console.log('QR image URL:', qrUrl);
+        // Debug logs (open console to inspect)
+        console.log('Generated UPI URI:', upiUri);
+        console.log('QR image URL:', qrUrl);
 
-      // Reset UI
-      qrImg.style.display = 'block';
-      qrImg.src = qrUrl;
-      upiText.style.display = 'block';
-      upiText.value = paDisplay;
-      document.getElementById('qrNote').textContent = 'Open your UPI app (GPay/PhonePe/BHIM) and scan the QR or copy the UPI ID below.';
-      qrModal.style.display = 'block';
+        // Reset UI
+        qrImg.style.display = 'block';
+        qrImg.src = qrUrl;
+        upiText.style.display = 'block';
+        upiText.value = paDisplay;
+        document.getElementById('qrNote').textContent = 'Open your UPI app (GPay/PhonePe/BHIM) and scan the QR or copy the UPI ID below.';
+        qrModal.style.display = 'block';
 
-      // Handle image load error gracefully
-      qrImg.onerror = function(ev){
-        console.warn('QR image failed to load:', ev);
-        // hide broken image, show fallback text + message
+        // Handle image load error gracefully
+        qrImg.onerror = function (ev) {
+          console.warn('QR image failed to load:', ev);
+          // hide broken image, show fallback text + message
+          qrImg.style.display = 'none';
+          upiText.style.display = 'block';
+          upiText.value = paDisplay;
+          document.getElementById('qrNote').textContent =
+            'QR unavailable — copy the UPI ID below and paste it in your UPI app.';
+        };
+      } catch (err) {
+        console.error('showQrModal error:', err);
+        // fallback UI
         qrImg.style.display = 'none';
         upiText.style.display = 'block';
         upiText.value = paDisplay;
         document.getElementById('qrNote').textContent =
-          'QR unavailable — copy the UPI ID below and paste it in your UPI app.';
-      };
-    } catch (err) {
-      console.error('showQrModal error:', err);
-      // fallback UI
-      qrImg.style.display = 'none';
-      upiText.style.display = 'block';
-      upiText.value = paDisplay;
-      document.getElementById('qrNote').textContent =
-        'QR generation failed — copy the UPI ID below and paste it in your UPI app.';
-      qrModal.style.display = 'block';
+          'QR generation failed — copy the UPI ID below and paste it in your UPI app.';
+        qrModal.style.display = 'block';
+      }
     }
-  }
 
-  function closeQrModal(){
-    qrModal.style.display = 'none';
-    // cleanup
-    qrImg.onerror = null;
-    qrImg.src = '';
-    upiText.value = '';
-    document.getElementById('qrNote').textContent = 'Open your UPI app (GPay/PhonePe/BHIM) and scan the QR or copy the UPI ID below.';
-  }
-
-  qrModalClose.addEventListener('click', closeQrModal);
-
-  copyUpiBtn.addEventListener('click', async function(){
-    try {
-      await navigator.clipboard.writeText(upiText.value);
-      copyUpiBtn.textContent = 'Copied';
-      setTimeout(()=> copyUpiBtn.textContent = 'Copy', 1500);
-    } catch (err) {
-      console.warn('Clipboard write failed, select manually:', err);
-      upiText.focus();
-      upiText.select();
-      alert('Unable to copy automatically — select and copy the UPI ID displayed.');
+    function closeQrModal() {
+      qrModal.style.display = 'none';
+      // cleanup
+      qrImg.onerror = null;
+      qrImg.src = '';
+      upiText.value = '';
+      document.getElementById('qrNote').textContent = 'Open your UPI app (GPay/PhonePe/BHIM) and scan the QR or copy the UPI ID below.';
     }
-  });
 
-  /* Main method button handler (Razorpay or UPI apps with fallback) */
-  methodButtons.forEach(btn => {
-    btn.addEventListener('click', async function(){
-      const provider = btn.dataset.provider;        // 'razorpay' | 'gpay' | 'phonepe' | 'bhim'
-      const to = modal.dataset.to;     
-      console.log(to)            // expected VPA like mathivarma@icici
-      const amount = modal.dataset.amount;         // e.g. "1.00"
-      const name = "{{ user.username }}";
-      const txnNotePrefix = "GapyPay";
+    qrModalClose.addEventListener('click', closeQrModal);
 
-      if(!to || !to.includes('@')){
-        alert('Please enter a valid UPI ID (example: mathivarma@icici).');
-        return;
-      }
-
-      let res;
+    copyUpiBtn.addEventListener('click', async function () {
       try {
-        res = await createOrder(amount, to, provider,modal.dataset.txn);
+        await navigator.clipboard.writeText(upiText.value);
+        copyUpiBtn.textContent = 'Copied';
+        setTimeout(() => copyUpiBtn.textContent = 'Copy', 1500);
       } catch (err) {
-        console.error(err);
-        alert('Order creation failed');
-        return;
-      }
-      if(!res || !res.ok){
-        alert(res?.message || 'Order creation failed');
-        return;
-      }
-
-      if(provider === 'razorpay'){
-        console.log("Opening Razorpay with:", res.order_id, res.amount_paise, res.txn_id);
-        await openRazorpay(res.order_id, res.amount_paise, res.txn_id);
-        return;
-      }
-
-      const tn = "Test";
-      const upiUri = buildUpiUri({ pa: to, pn: name, amount, tn });
-
-      // Desktop -> show QR modal fallback
-      if(!isMobile()){
-        showQrModal(upiUri, to);
-        if(typeof closeModal === 'function') closeModal();
-        return;
-      }
-function buildPhonePeIntentUri({ pa, pn, amount, tn }) {
-  const e = encodeURIComponent;
-
-  // Base UPI parameters
-  const base = `pay?pa=${e(pa)}&pn=${e(pn)}&tn=${e(tn)}&am=${e(amount)}&cu=INR`;
-
-  // PhonePe package name: com.phonepe.app
-  const phonepeIntent = `intent://${base}#Intent;scheme=upi;package=com.phonepe.app;end`;
-
-  console.log("Generated PhonePe Intent:", phonepeIntent);
-  return phonepeIntent;
-}
-      // Mobile -> try intent/upi link
-      try {
-        if(provider === 'gpay'){
-          const gpayIntent = buildUpiUri({ pa: to, pn: name, amount, tn });
-              showlink.textContent=gpayIntent;
-
-          window.location.href = gpayIntent;
-          // fallback to generic UPI URI a bit later
-          setTimeout(()=> { window.location.href = upiUri; }, 700);
-        } else {
-          window.location.href = upiUri;
-        }
-        if(typeof closeModal === 'function') closeModal();
-      } catch (err) {
-        console.error('Failed to open UPI intent:', err);
-        showQrModal(upiUri, to);
-      }
-            try {
-        if(provider === 'phonepe'){
-          const gpayIntent = buildUpiUri({ pa: to, pn: name, amount, tn });
-          window.location.href = gpayIntent;
-          // fallback to generic UPI URI a bit later
-          setTimeout(()=> { window.location.href = upiUri; }, 700);
-        } else {
-          window.location.href = upiUri;
-        }
-        if(typeof closeModal === 'function') closeModal();
-      } catch (err) {
-        console.error('Failed to open UPI intent:', err);
-        showQrModal(upiUri, to);
+        console.warn('Clipboard write failed, select manually:', err);
+        upiText.focus();
+        upiText.select();
+        alert('Unable to copy automatically — select and copy the UPI ID displayed.');
       }
     });
-  });
 
-})();
+    /* Main method button handler (Razorpay or UPI apps with fallback) */
+    methodButtons.forEach(btn => {
+      btn.addEventListener('click', async function () {
+        const provider = btn.dataset.provider;        // 'razorpay' | 'gpay' | 'phonepe' | 'bhim'
+        const to = modal.dataset.to;
+        console.log(to)            // expected VPA like mathivarma@icici
+        const amount = modal.dataset.amount;         // e.g. "1.00"
+        const name = "{{ user.username }}";
+        const txnNotePrefix = "GapyPay";
 
-document.getElementById('goRecharge').addEventListener('click', function(){
-  window.location.href = "{% url 'core:recharge' %}";
-});
-document.getElementById('iPaidBtn').addEventListener('click', async function() {
-  const txnInput = document.getElementById('txnInput').value.trim();
-  const storedTxn = localStorage.getItem('pending_txn');
-  const token = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
+        if (!to || !to.includes('@')) {
+          alert('Please enter a valid UPI ID (example: mathivarma@icici).');
+          return;
+        }
 
-  if (!txnInput) {
-    alert('Please enter the Transaction ID shown in your UPI app.');
-    return;
-  }
+        let res;
+        try {
+          res = await createOrder(amount, to, provider, modal.dataset.txn);
+        } catch (err) {
+          console.error(err);
+          alert('Order creation failed');
+          return;
+        }
+        if (!res || !res.ok) {
+          alert(res?.message || 'Order creation failed');
+          return;
+        }
 
-  if (!storedTxn) {
-    alert('No transaction found. Please make a payment first.');
-    return;
-  }
+        if (provider === 'razorpay') {
+          console.log("Opening Razorpay with:", res.order_id, res.amount_paise, res.txn_id);
+          await openRazorpay(res.order_id, res.amount_paise, res.txn_id);
+          return;
+        }
 
-  // verify match
-  if (txnInput !== storedTxn) {
-    alert('Transaction ID does not match the initiated payment. Please check and try again.');
-    return;
-  }
-  let txn_numb = localStorage.getItem('pending_txn');
-  // send to backend to mark paid
-  try {
-    const resp = await fetch("{% url 'core:i_paid' %}", {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': token,
-      },
-      body: JSON.stringify({ txn_numb: txnInput }),
-    });
-    const data = await resp.json();
-    if (resp.ok && data.ok) {
-      alert('Payment confirmed successfully!');
-      localStorage.removeItem('pending_txn');
-      window.location.reload();
-    } else {
-      alert(data.message || 'Failed to confirm payment.');
-    }
-  } catch (err) {
-    console.error(err);
-    alert('Error contacting server.');
-  }
- 
-});
+        const tn = "Test";
+        const upiUri = buildUpiUri({ pa: to, pn: name, amount, tn });
 
+        // Desktop -> show QR modal fallback
+        if (!isMobile()) {
+          showQrModal(upiUri, to);
+          if (typeof closeModal === 'function') closeModal();
+          return;
+        }
+        function buildPhonePeIntentUri({ pa, pn, amount, tn }) {
+          const e = encodeURIComponent;
 
-// /////////////////trans_details
-// --- Transaction modal logic ---
-(function(){
-  const txnModal = document.getElementById('txnModal');
-  const txnModalClose = document.getElementById('txnModalClose');
-  const closeTxnBtn = document.getElementById('closeTxnBtn');
+          // Base UPI parameters
+          const base = `pay?pa=${e(pa)}&pn=${e(pn)}&tn=${e(tn)}&am=${e(amount)}&cu=INR`;
 
-  function closeTxn(){ txnModal.style.display = 'none'; }
-  txnModalClose.addEventListener('click', closeTxn);
-  closeTxnBtn.addEventListener('click', closeTxn);
+          // PhonePe package name: com.phonepe.app
+          const phonepeIntent = `intent://${base}#Intent;scheme=upi;package=com.phonepe.app;end`;
 
-  // copy txn id
-  document.getElementById('copyTxnBtn').addEventListener('click', async function(){
-    const v = document.getElementById('txn_txnnum').textContent;
-    try { await navigator.clipboard.writeText(v); this.textContent = 'Copied'; setTimeout(()=> this.textContent='Copy',1200); } catch(e){ alert('Copy failed, select manual'); }
-  });
+          console.log("Generated PhonePe Intent:", phonepeIntent);
+          return phonepeIntent;
+        }
+        // Mobile -> try intent/upi link
+        try {
+          if (provider === 'gpay') {
+            const gpayIntent = buildUpiUri({ pa: to, pn: name, amount, tn });
+            showlink.textContent = gpayIntent;
 
-  // download JSON
-  document.getElementById('downloadJsonBtn').addEventListener('click', function(){
-    const raw = document.getElementById('txn_raw').textContent || '{}';
-    const blob = new Blob([raw], {type: 'application/json'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = `${document.getElementById('txn_txnnum').textContent || 'tx'}.json`;
-    document.body.appendChild(a); a.click(); a.remove();
-    URL.revokeObjectURL(url);
-  });
-
-  // Download PDF: uses jsPDF (client-side)
-  document.getElementById('downloadPdfBtn').addEventListener('click', function(){
-    // minimal jsPDF usage - ensure jsPDF script is included (see step 4)
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    const title = 'GapyPay - Transaction Receipt';
-    doc.setFontSize(14); doc.text(title, 14, 18);
-    const txn = document.getElementById('txn_txnnum').textContent;
-    const to = document.getElementById('txn_to').textContent;
-    const amount = document.getElementById('txn_amount').textContent;
-    const status = document.getElementById('txnStatusBadge').textContent;
-    doc.setFontSize(11);
-    doc.text(`Transaction ID: ${txn}`, 14, 30);
-    doc.text(`To: ${to}`, 14, 38);
-    doc.text(`Amount: ₹${amount}`, 14, 46);
-    doc.text(`Status: ${status}`, 14, 54);
-    doc.save(`${txn}_receipt.pdf`);
-  });
-
-  // event delegation for clicks on transaction rows
-  document.getElementById('txnBody').addEventListener('click', async function(ev){
-    const tr = ev.target.closest('tr.txn-row');
-    if(!tr) return;
-    const txnId = tr.dataset.txn;
-    // fetch detail from server
-    try {
-      const resp = await fetch("{% url 'core:transaction_detail' 0 %}".replace('/0/','/' + txnId + '/'), {
-        headers: {'X-Requested-With': 'XMLHttpRequest'}
+            window.location.href = gpayIntent;
+            // fallback to generic UPI URI a bit later
+            setTimeout(() => { window.location.href = upiUri; }, 700);
+          } else {
+            window.location.href = upiUri;
+          }
+          if (typeof closeModal === 'function') closeModal();
+        } catch (err) {
+          console.error('Failed to open UPI intent:', err);
+          showQrModal(upiUri, to);
+        }
+        try {
+          if (provider === 'phonepe') {
+            const gpayIntent = buildUpiUri({ pa: to, pn: name, amount, tn });
+            window.location.href = gpayIntent;
+            // fallback to generic UPI URI a bit later
+            setTimeout(() => { window.location.href = upiUri; }, 700);
+          } else {
+            window.location.href = upiUri;
+          }
+          if (typeof closeModal === 'function') closeModal();
+        } catch (err) {
+          console.error('Failed to open UPI intent:', err);
+          showQrModal(upiUri, to);
+        }
       });
-      if(!resp.ok) throw new Error('fetch failed');
+    });
+
+  })();
+
+  document.getElementById('goRecharge').addEventListener('click', function () {
+    window.location.href = "{% url 'core:recharge' %}";
+  });
+  document.getElementById('iPaidBtn').addEventListener('click', async function () {
+    const txnInput = document.getElementById('txnInput').value.trim();
+    const storedTxn = localStorage.getItem('pending_txn');
+    const token = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
+
+    if (!txnInput) {
+      alert('Please enter the Transaction ID shown in your UPI app.');
+      return;
+    }
+
+    if (!storedTxn) {
+      alert('No transaction found. Please make a payment first.');
+      return;
+    }
+
+    // verify match
+    if (txnInput !== storedTxn) {
+      alert('Transaction ID does not match the initiated payment. Please check and try again.');
+      return;
+    }
+    let txn_numb = localStorage.getItem('pending_txn');
+    // send to backend to mark paid
+    try {
+      const resp = await fetch("{% url 'core:i_paid' %}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': token,
+        },
+        body: JSON.stringify({ txn_numb: txnInput }),
+      });
       const data = await resp.json();
-      populateTxnModal(data.transaction);
+      if (resp.ok && data.ok) {
+        alert('Payment confirmed successfully!');
+        localStorage.removeItem('pending_txn');
+        window.location.reload();
+      } else {
+        alert(data.message || 'Failed to confirm payment.');
+      }
     } catch (err) {
       console.error(err);
-      alert('Failed to load transaction details.');
+      alert('Error contacting server.');
     }
+
   });
 
-  function populateTxnModal(t){
-    // Basic summary
-    document.getElementById('txn_txnnum').textContent = t.txn_num || t.id || '';
-    document.getElementById('txn_to').textContent = t.to || '';
-    document.getElementById('txn_amount').textContent = (t.amount || 0).toFixed ? (t.amount.toFixed(2)) : t.amount;
-    document.getElementById('txn_method').textContent = t.provider || '';
-    document.getElementById('txn_created').textContent = t.created_at || '';
-    // status badge
-    const badge = document.getElementById('txnStatusBadge');
-    badge.textContent = t.status || '';
-    badge.className = '';
-    if((t.status||'').toLowerCase() === 'success') badge.classList.add('badge','badge-success');
-    else if((t.status||'').toLowerCase() === 'pending') badge.classList.add('badge','badge-warning');
-    else badge.classList.add('badge','badge-failed');
-    // timeline (array of {event, at})
-    const list = document.getElementById('txn_timeline_list');
-    list.innerHTML = '';
-    if(Array.isArray(t.timeline)) {
-      t.timeline.forEach(item => {
-        const li = document.createElement('li');
-        li.textContent = `${item.event} — ${item.at || ''}`;
-        list.appendChild(li);
-      });
-    } else {
-      list.innerHTML = `<li>Created — ${t.created_at || ''}</li>`;
-    }
-    // metadata
-    document.getElementById('txn_rzp_order').textContent = t.razorpay_order_id || '';
-    document.getElementById('txn_rzp_payment').textContent = t.razorpay_payment_id || '';
-    document.getElementById('txn_upi_ref').textContent = t.upi_reference || '';
-    // raw JSON
-    document.getElementById('txn_raw').textContent = JSON.stringify(t, null, 2);
-    // show modal
-    txnModal.style.display = 'block';
 
-    // if pending and has recharge link or payment retry, show hint or action
-    if((t.status||'').toLowerCase() === 'pending' && t.retry_url) {
-      // add quick action to header (example)
-      document.getElementById('txnHeader').innerHTML = `Transaction Details — <a href="${t.retry_url}" class="btn small">Go to retry</a>`;
-    } else {
-      document.getElementById('txnHeader').textContent = 'Transaction Details';
+  // /////////////////trans_details
+  // --- Transaction modal logic ---
+  (function () {
+    const txnModal = document.getElementById('txnModal');
+    const txnModalClose = document.getElementById('txnModalClose');
+    const closeTxnBtn = document.getElementById('closeTxnBtn');
+
+    function closeTxn() { txnModal.style.display = 'none'; }
+    txnModalClose.addEventListener('click', closeTxn);
+    closeTxnBtn.addEventListener('click', closeTxn);
+
+    // copy txn id
+    document.getElementById('copyTxnBtn').addEventListener('click', async function () {
+      const v = document.getElementById('txn_txnnum').textContent;
+      try { await navigator.clipboard.writeText(v); this.textContent = 'Copied'; setTimeout(() => this.textContent = 'Copy', 1200); } catch (e) { alert('Copy failed, select manual'); }
+    });
+
+    // download JSON
+    document.getElementById('downloadJsonBtn').addEventListener('click', function () {
+      const raw = document.getElementById('txn_raw').textContent || '{}';
+      const blob = new Blob([raw], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `${document.getElementById('txn_txnnum').textContent || 'tx'}.json`;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    });
+
+    // // Download PDF: uses jsPDF (client-side)
+    // document.getElementById('downloadPdfBtn').addEventListener('click', function(){
+    //   // minimal jsPDF usage - ensure jsPDF script is included (see step 4)
+    //   const { jsPDF } = window.jspdf;
+    //   const doc = new jsPDF();
+    //   const title = 'GapyPay - Transaction Receipt';
+    //   doc.setFontSize(14); doc.text(title, 14, 18);
+    //   const txn = document.getElementById('txn_txnnum').textContent;
+    //   const to = document.getElementById('txn_to').textContent;
+    //   const amount = document.getElementById('txn_amount').textContent;
+    //   const status = document.getElementById('txnStatusBadge').textContent;
+    //   doc.setFontSize(11);
+    //   doc.text(`Transaction ID: ${txn}`, 14, 30);
+    //   doc.text(`To: ${to}`, 14, 38);
+    //   doc.text(`Amount: ₹${amount}`, 14, 46);
+    //   doc.text(`Status: ${status}`, 14, 54);
+    //   doc.save(`${txn}_receipt.pdf`);
+    // });
+
+    // Download PDF: professional invoice using jsPDF (keep same DOM reads)
+    document.getElementById('downloadPdfBtn').addEventListener('click', function () {
+      const statusUpper = document.getElementById('txnStatusBadge').textContent.trim().toUpperCase();
+      if (statusUpper === "PENDING") {
+        alert("Invoice cannot be downloaded until payment is successful.");
+        return;
+      }
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'pt', format: 'a4' }); // pts, A4
+
+      // Read values from DOM (unchanged logic)
+      const txn = document.getElementById('txn_txnnum').textContent.trim();
+      const to = document.getElementById('txn_to').textContent.trim();
+      const amountRaw = document.getElementById('txn_amount').textContent.trim();
+      const status = document.getElementById('txnStatusBadge').textContent.trim();
+
+      // Basic formatting helpers
+      const pad = (n) => n.toString().padStart(2, '0');
+      const now = new Date();
+      const generatedAt = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+      const amount = parseFloat(amountRaw.toString().replace(/[^0-9.-]/g, '')) || 0;
+      const formatINR = (v) => "₹" + v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+      // Layout constants
+      const leftMargin = 40;
+      const rightLimit = doc.internal.pageSize.getWidth() - 40;
+      let y = 40;
+
+      // --- Header (logo + company) ---
+      // optional logo: if you have an <img id="companyLogo"> element with dataUrl or src (CORS permitting)
+      const logoEl = document.getElementById('companyLogo');
+      if (logoEl && logoEl.src) {
+        // draw image if small and accessible
+        try {
+          doc.addImage(logoEl, 'PNG', leftMargin, y, 80, 40);
+        } catch (e) {
+          // image load error -> ignore
+        }
+      }
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(18);
+      doc.text('GapyPay Pvt Ltd', leftMargin + 100, y + 18);
+
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Payments & Recharge Services', leftMargin + 100, y + 34);
+      doc.text('123, Some Street, City, PIN', leftMargin + 100, y + 50);
+      doc.text('Email: support@gapypay.com | Phone: +91-XXXXXXXXXX', leftMargin + 100, y + 66);
+
+      // Invoice meta (right aligned)
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      const invTitleX = rightLimit - 160;
+      doc.text('INVOICE', invTitleX, y + 18);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text(`Invoice #: ${txn}`, invTitleX, y + 36);
+      doc.text(`Date: ${generatedAt.split(' ')[0]}`, invTitleX, y + 52);
+
+      y += 90;
+
+      // --- Billing / Transaction info boxes ---
+      const boxHeight = 70;
+      const mid = leftMargin + 320;
+      doc.setDrawColor(200);
+      doc.rect(leftMargin, y, 260, boxHeight); // billed to box
+      doc.rect(mid, y, 220, boxHeight); // transaction box
+
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Billed To', leftMargin + 8, y + 16);
+      doc.setFont('helvetica', 'normal');
+      doc.text(to || 'N/A', leftMargin + 8, y + 34);
+      // Optionally add email/phone below if present in DOM
+      const emailEl = document.getElementById('txn_email');
+      if (emailEl) {
+        const email = emailEl.textContent.trim();
+        if (email) doc.text(email, leftMargin + 8, y + 50);
+      }
+
+      doc.setFont('helvetica', 'bold');
+      doc.text('Transaction', mid + 8, y + 16);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Txn ID: ${txn}`, mid + 8, y + 34);
+      doc.text(`Status: ${status}`, mid + 8, y + 50);
+
+      y += boxHeight + 20;
+
+  // --- Items Table header (REPLACED for better column alignment) ---
+const tableLeft = leftMargin;
+const tableRight = rightLimit;
+const tableWidth = tableRight - tableLeft;
+
+// column positions (tuned)
+const colDesc = tableLeft + 8;
+const colQtyX = tableLeft + Math.round(tableWidth * 0.62);   // Qty column (center)
+const colRateX = tableLeft + Math.round(tableWidth * 0.72);  // Rate (right aligned)
+const colAmountX = tableLeft + Math.round(tableWidth * 0.90); // Amount (right aligned)
+
+// header background
+doc.setDrawColor(180);
+doc.setFillColor(245, 245, 245);
+doc.rect(tableLeft, y, tableWidth, 22, 'F'); // header bg
+
+doc.setFont('helvetica', 'bold');
+doc.setFontSize(11);
+doc.text('Description', colDesc, y + 15);
+doc.text('Qty', colQtyX, y + 15, { align: 'center' });
+doc.text('Rate', colRateX, y + 15, { align: 'right' });
+doc.text('Amount', colAmountX, y + 15, { align: 'right' });
+
+y += 28;
+
+// --- Single item row (improved layout) ---
+doc.setFont('helvetica', 'normal');
+doc.setFontSize(11);
+const desc = `Payment - Transaction ${txn}`;
+const qty = 1;
+const rate = amount;
+const amt = amount;
+
+// draw row box (full-width)
+const rowH = 22;
+doc.rect(tableLeft, y - 6, tableWidth, rowH);
+
+// description: allow wrapping up to description column max width
+const descMaxWidth = colQtyX - colDesc - 12; // space before qty column
+doc.text(doc.splitTextToSize(desc, descMaxWidth), colDesc, y + 12);
+
+// qty (centered in its column region)
+doc.text(String(qty), colQtyX, y + 12, { align: 'center' });
+
+// rate & amount (right aligned)
+doc.text(formatINR(rate), colRateX, y + 12, { align: 'right' });
+doc.text(formatINR(amt), colAmountX, y + 12, { align: 'right' });
+
+y += rowH + 12;
+
+// --- Totals (right side) ---
+const totalsX = leftMargin + Math.round(tableWidth * 0.62);
+const totalsRight = tableRight - 8;
+const lineH = 16;
+
+const subtotal = amt;
+const taxPercent = 0;
+const tax = +(subtotal * taxPercent / 100);
+const grandTotal = subtotal + tax;
+
+doc.setFont('helvetica', 'normal');
+doc.setFontSize(11);
+// Subtotal
+doc.text('Subtotal', totalsX, y);
+doc.text(formatINR(subtotal), totalsRight, y, { align: 'right' });
+
+// Tax (if any)
+if (taxPercent > 0) {
+  y += lineH;
+  doc.text(`Tax (${taxPercent}%)`, totalsX, y);
+  doc.text(formatINR(tax), totalsRight, y, { align: 'right' });
+}
+
+// Grand total (emphasized)
+y += lineH;
+doc.setFont('helvetica', 'bold');
+doc.setFontSize(13);
+doc.text('Total', totalsX, y + 6);
+doc.text(formatINR(grandTotal), totalsRight, y + 6, { align: 'right' });
+
+y += 36;
+
+
+      // --- Notes / Footer ---
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      const notes = "This is a system-generated invoice for the transaction. For queries, contact support@gapypay.com";
+      doc.text('Notes:', leftMargin, y);
+      doc.setFontSize(9);
+      doc.text(doc.splitTextToSize(notes, rightLimit - leftMargin - 20), leftMargin, y + 12);
+
+      // Signature placeholder (right)
+      const sigY = y + 60;
+      doc.line(rightLimit - 200, sigY, rightLimit - 40, sigY); // signature line
+      doc.setFontSize(10);
+      doc.text('Authorized Signature', rightLimit - 196, sigY + 16);
+
+      // Small footer
+      const footerY = doc.internal.pageSize.getHeight() - 40;
+      doc.setFontSize(9);
+      doc.text('GapyPay Pvt Ltd — Registered Office: 123, Some Street, City — GSTIN: XXAAAA0000X1Z5', leftMargin, footerY);
+
+      // Save file
+      const fileName = `${txn || 'invoice'}_invoice.pdf`;
+      doc.save(fileName);
+    });
+
+
+    // event delegation for clicks on transaction rows
+    document.getElementById('txnBody').addEventListener('click', async function (ev) {
+      const tr = ev.target.closest('tr.txn-row');
+      if (!tr) return;
+      const txnId = tr.dataset.txn;
+      console.log('YTBNS ', txnId)
+      // fetch detail from server
+      try {
+        const resp = await fetch("{% url 'core:transaction_detail' 0 %}".replace('/0/', '/' + txnId + '/'), {
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        if (!resp.ok) throw new Error('fetch failed');
+        const data = await resp.json();
+        populateTxnModal(data.transaction);
+      } catch (err) {
+        console.error(err);
+        alert('Failed to load transaction details.');
+      }
+    });
+
+    function populateTxnModal(t) {
+      // Basic summary
+      document.getElementById('txn_txnnum').textContent = t.txn_num || t.id || '';
+      document.getElementById('txn_to').textContent = t.to || '';
+      document.getElementById('txn_amount').textContent = (t.amount || 0).toFixed ? (t.amount.toFixed(2)) : t.amount;
+      document.getElementById('txn_method').textContent = t.provider || '';
+      document.getElementById('txn_created').textContent = t.created_at || '';
+      // status badge
+      const badge = document.getElementById('txnStatusBadge');
+      badge.textContent = t.status || '';
+      badge.className = '';
+      if ((t.status || '').toLowerCase() === 'success') badge.classList.add('badge', 'badge-success');
+      else if ((t.status || '').toLowerCase() === 'pending') badge.classList.add('badge', 'badge-warning');
+      else badge.classList.add('badge', 'badge-failed');
+      // timeline (array of {event, at})
+      const list = document.getElementById('txn_timeline_list');
+      list.innerHTML = '';
+      if (Array.isArray(t.timeline)) {
+        t.timeline.forEach(item => {
+          const li = document.createElement('li');
+          li.textContent = `${item.event} — ${item.at || ''}`;
+          list.appendChild(li);
+        });
+      } else {
+        list.innerHTML = `<li>Created — ${t.created_at || ''}</li>`;
+      }
+      // metadata
+      document.getElementById('txn_rzp_order').textContent = t.razorpay_order_id || '';
+      document.getElementById('txn_rzp_payment').textContent = t.razorpay_payment_id || '';
+      document.getElementById('txn_upi_ref').textContent = t.upi_reference || '';
+      // raw JSON
+      document.getElementById('txn_raw').textContent = JSON.stringify(t, null, 2);
+      // show modal
+      txnModal.style.display = 'block';
+
+      // if pending and has recharge link or payment retry, show hint or action
+      if ((t.status || '').toLowerCase() === 'pending' && t.retry_url) {
+        // add quick action to header (example)
+        document.getElementById('txnHeader').innerHTML = `Transaction Details — <a href="${t.retry_url}" class="btn small">Go to retry</a>`;
+      } else {
+        document.getElementById('txnHeader').textContent = 'Transaction Details';
+      }
     }
-  }
-})();
+  })();
+
+
+  /* === Listen for txnFiltersChanged and call backend API === */
+  (function () {
+    // helper: get CSRF token from cookie (Django default cookie name 'csrftoken')
+    function getCookie(name) {
+      const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+      return v ? v.pop() : '';
+    }
+    const csrftoken = getCookie('csrftoken');
+
+    // small helper to escape HTML
+    function escapeHtml(s = '') {
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+    function capitalize(s = '') { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+    // render rows into #txnBody (simple HTML builder)
+    function renderRows(transactions) {
+      const tbody = document.getElementById('txnBody');
+      if (!tbody) return;
+      if (!transactions || transactions.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5">No transactions found</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = transactions.map(tx => {
+        const statusClass = tx.status === 'success' ? 'status-pill success'
+          : tx.status === 'pending' ? 'status-pill pending'
+            : 'status-pill failed';
+        const date = tx.date || '';
+        const to = tx.to || '';
+        const amount = tx.amount != null ? tx.amount : '';
+        const provider = tx.provider || '';
+        return `
+<tr class="txn-row" data-txn="${escapeHtml(String(tx.id))}">
+  <td>${escapeHtml(date)}</td>
+  <td>${escapeHtml(to)} <div style="font-size:11px;color:#98a3a3">${escapeHtml(tx.txn_id || '')}</div></td>
+  <td>₹${escapeHtml(String(amount))}</td>
+  <td>${escapeHtml(provider)}</td>
+  <td><span class="${statusClass}">${escapeHtml(capitalize(tx.status || ''))}</span></td>
+</tr>`;
+      }).join('');
+    }
+
+    // main fetching function
+    async function fetchFilteredTransactions(filters) {
+      try {
+        const tbody = document.getElementById('txnBody');
+        if (tbody) tbody.innerHTML = `<tr><td colspan="5">Loading...</td></tr>`;
+
+        const resp = await fetch('/transactions/filter/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken,
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(filters)
+        });
+
+        if (!resp.ok) {
+          console.error('Filter request failed', resp.status);
+          if (tbody) tbody.innerHTML = `<tr><td colspan="5">Error loading transactions</td></tr>`;
+          return;
+        }
+
+        const data = await resp.json();
+        renderRows(data.transactions || []);
+      } catch (err) {
+        console.error('Error fetching transactions', err);
+        const tbody = document.getElementById('txnBody');
+        if (tbody) tbody.innerHTML = `<tr><td colspan="5">Error loading transactions</td></tr>`;
+      }
+    }
+
+    // read filter values from the DOM
+    function readFilters() {
+      const search = (document.getElementById('txnSearchInput') || {}).value || '';
+      const from = (document.getElementById('txnDateFrom') || {}).value || '';
+      const to = (document.getElementById('txnDateTo') || {}).value || '';
+      const status = (document.getElementById('txnStatusSelect') || {}).value || '';
+      return { search, from, to, status };
+    }
+
+    // dispatch the txnFiltersChanged event (existing listener will pick this up)
+    function applyFilters() {
+      const { search, from, to, status } = readFilters();
+      const detail = { search, from, to, status };
+      // dispatch the custom event
+      const ev = new CustomEvent('txnFiltersChanged', { detail });
+      window.dispatchEvent(ev);
+      // also update chip active state (if applicable)
+      updateChipActiveState(status);
+    }
+
+    // clear filters in the UI and emit empty filters
+    function clearFilters() {
+      const s = document.getElementById('txnSearchInput');
+      const f = document.getElementById('txnDateFrom');
+      const t = document.getElementById('txnDateTo');
+      const st = document.getElementById('txnStatusSelect');
+
+      if (s) s.value = '';
+      if (f) f.value = '';
+      if (t) t.value = '';
+      if (st) st.value = '';
+
+      updateChipActiveState(''); // mark 'All' chip active
+      applyFilters(); // send empty filters to backend
+    }
+
+    // chip active styling helper (adds/removes class 'chip--active' on .chip elements)
+    function updateChipActiveState(activeStatus) {
+      const chips = Array.from(document.querySelectorAll('.chips .chip'));
+      chips.forEach(ch => {
+        const st = ch.getAttribute('data-status') || '';
+        if (st === activeStatus) ch.classList.add('chip--active');
+        else ch.classList.remove('chip--active');
+      });
+    }
+
+    // wire the CustomEvent emitted by the filter panel (this existed in your original code)
+    window.addEventListener('txnFiltersChanged', (e) => {
+      const payload = e.detail || {};
+      // payload = { search, from, to, status }
+      const filters = {
+        q: payload.search || '',
+        date_from: payload.from || '',
+        date_to: payload.to || '',
+        status: payload.status || ''
+      };
+      fetchFilteredTransactions(filters);
+    });
+
+    // attach UI listeners
+    function attachUI() {
+      const applyBtn = document.getElementById('txnApplyBtn');
+      const clearBtn = document.getElementById('txnClearBtn');
+      const searchInput = document.getElementById('txnSearchInput');
+      const statusSelect = document.getElementById('txnStatusSelect');
+      const chips = Array.from(document.querySelectorAll('.chips .chip'));
+      const filterClose = document.getElementById('txnFilterClose');
+
+      if (applyBtn) {
+        applyBtn.addEventListener('click', (ev) => {
+          ev.preventDefault();
+          applyFilters();
+        });
+      }
+
+      if (clearBtn) {
+        clearBtn.addEventListener('click', (ev) => {
+          ev.preventDefault();
+          clearFilters();
+        });
+      }
+
+      // Enter key on search triggers apply
+      if (searchInput) {
+        searchInput.addEventListener('keydown', (ev) => {
+          if (ev.key === 'Enter') {
+            ev.preventDefault();
+            applyFilters();
+          }
+        });
+      }
+
+      // status select change triggers apply immediately (optional)
+      if (statusSelect) {
+        statusSelect.addEventListener('change', () => {
+          // keep chip state in sync
+          updateChipActiveState(statusSelect.value || '');
+          // optionally auto-apply on change — comment out if you don't want auto fetch
+          applyFilters();
+        });
+      }
+
+      // chip buttons: set status and apply
+      if (chips.length) {
+        chips.forEach(ch => {
+          ch.addEventListener('click', (ev) => {
+            const s = ch.getAttribute('data-status') || '';
+            // set select to keep UI in sync
+            if (statusSelect) statusSelect.value = s;
+            updateChipActiveState(s);
+            applyFilters();
+          });
+        });
+      }
+
+      // optional: close button hides panel (if you have CSS to hide via aria-hidden)
+      if (filterClose) {
+        filterClose.addEventListener('click', (ev) => {
+          const panel = document.getElementById('txnFilterPanel');
+          if (panel) {
+            panel.setAttribute('aria-hidden', 'true');
+            // if you want to simply remove from view:
+            // panel.style.display = 'none';
+          }
+        });
+      }
+    }
+
+    // on page load request initial data and attach UI
+    window.addEventListener('load', () => {
+      attachUI();
+      // trigger initial fetch with empty filters
+      fetchFilteredTransactions({ q: '', date_from: '', date_to: '', status: '' });
+      // make sure chips show correct initial state
+      updateChipActiveState('');
+    });
+
+  })();
+
 
 
 

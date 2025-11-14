@@ -7,7 +7,8 @@
 /* === Theme tokens === */
 :root{
   --bg-main: #fbfbfc;
-  --bg-soft: linear-gradient(180deg,#fbfbfc 0%, #f6f8fa 55%, #fffaf6 100%);
+
+
   --panel: #ffffff;
   --muted: #6a7785;
   --text: #0e2433;
@@ -21,7 +22,7 @@
   --danger: #ef4444;
   --radius: 16px;
   --small-radius: 10px;
-  --container: 1100px;
+  --container: 1200px;
   --transition: 260ms cubic-bezier(.2,.9,.3,1);
   --long: 700ms cubic-bezier(.2,.9,.3,1);
   --shadow-lg: 0 26px 60px rgba(14,28,40,0.08);
@@ -40,7 +41,7 @@ body{
   margin:0;
   font-family: Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial, system-ui;
   color:var(--text);
-  background: var(--bg-soft);
+background-color: white;
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
   padding-bottom:70px;
@@ -73,65 +74,251 @@ body::after{
 
 /* === Container === */
 .container{
-  width:94%;
+  width:98%;
   max-width:var(--container);
   margin:0 auto;
 }
 
 /* === Header / brand / nav === */
-.site-header{
-  position:sticky;
-  top:12px;
-  z-index:60;
-  background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.90));
-  border-radius:14px;
-  padding:12px 16px;
-  box-shadow: var(--shadow-md);
-  border:1px solid var(--glass-border);
-  backdrop-filter: blur(6px) saturate(1.02);
+/* ========== Animated Header (CSS only) ========== */
+
+/* tiny helpers */
+:root{
+  --transition-fast: 180ms;
+  --transition: 300ms cubic-bezier(.2,.9,.28,1);
+  --shadow-md: 0 8px 30px rgba(11,22,30,0.06);
+  --glass-border: rgba(255,255,255,0.55);
+  --muted: #6b7785;
+  --text: #0f1720;
+  --accent: #19a974;
+  --accent-2: #00bfc7;
+  --teal: #0ea5a4;
 }
+
+/* respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+
+/* Header container — lifted glass card with micro-animation */
+.site-header{
+  position: sticky;
+  top: 12px;
+  z-index: 60;
+
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(8px) saturate(1.02);
+
+  /* animated background subtle */
+background: linear-gradient(
+    180deg,
+    rgba(250, 252, 254, 0.96),
+    rgba(238, 241, 245, 0.95)
+);
+
+  box-shadow: var(--shadow-md);
+  transform: translateZ(0);
+  will-change: transform, box-shadow;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+/* subtle breathing effect to make the header feel alive */
+@keyframes header-breathe {
+  0% { box-shadow: 0 6px 20px rgba(11,22,30,0.04); transform: translateY(0); }
+  50% { box-shadow: 0 14px 36px rgba(11,22,30,0.06); transform: translateY(-1px); }
+  100% { box-shadow: 0 6px 20px rgba(11,22,30,0.04); transform: translateY(0); }
+}
+.site-header {
+  animation: header-breathe 6s ease-in-out infinite;
+}
+
+/* header inner layout */
 .header-inner{
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:12px;
 }
+
+/* BRAND */
 .brand{
   display:flex;
   align-items:center;
   gap:12px;
   text-decoration:none;
   color:var(--text);
+  cursor: pointer;
 }
+
+/* rotating conic gradient icon with depth */
 .brand-icon{
-  width:46px; height:46px; display:inline-flex; align-items:center; justify-content:center;
+  width:46px;
+  height:46px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
   border-radius:12px;
   padding:6px;
-  background: conic-gradient(from 140deg, var(--accent-2), var(--accent), var(--teal));
-  color:white;
-  box-shadow: 0 8px 26px rgba(14,28,40,0.07);
-  transform:translateZ(0);
-  transition: transform var(--transition);
+  background: conic-gradient(from 160deg, var(--accent-2), var(--accent), var(--teal));
+  color: white;
+  box-shadow: 0 10px 30px rgba(14,28,40,0.08);
+  transform: translateZ(0);
+  transition: transform 400ms cubic-bezier(.2,.9,.28,1), box-shadow var(--transition);
+  position: relative;
+  overflow: hidden;
 }
-.brand:hover .brand-icon{ transform: translateY(-4px) scale(1.02); }
+
+/* slow rotate for the gradient layer */
+@keyframes icon-rotate {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.brand-icon::before{
+  content: "";
+  position: absolute;
+  inset: -30%;
+  background: inherit;
+  filter: saturate(1.05) blur(6px);
+  animation: icon-rotate 26s linear infinite;
+  opacity: 0.9;
+  border-radius: inherit;
+  z-index: 0;
+}
+.brand-icon > * { z-index: 1; } /* keep content above animated layer */
+
+/* pop & lift on hover */
+.brand:hover .brand-icon{
+  transform: translateY(-6px) scale(1.04);
+  box-shadow: 0 18px 40px rgba(14,28,40,0.12);
+}
+
+/* shimmering gradient-text for brand label */
 .brand-text{
-  font-weight:800; font-size:18px; letter-spacing:0.2px;
-  background: linear-gradient(90deg,#0e2433,#123247);
-  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  font-weight:800;
+  font-size:18px;
+  letter-spacing:0.2px;
+  display:inline-block;
+  background: linear-gradient(90deg,#0e2433,#123247 40%, #0ea5a4 70%);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  position: relative;
+  overflow: hidden;
 }
 
-/* nav */
-.nav{ display:flex; gap:10px; align-items:center; }
+/* tiny shimmer */
+@keyframes shimmer {
+  0% { background-position: -120% 0; }
+  60% { background-position: 220% 0; }
+  100% { background-position: 220% 0; }
+}
+.brand-text {
+  background-size: 220% 100%;
+  animation: shimmer 3.8s linear infinite;
+}
+
+/* NAV */
+.nav{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+
+/* link base */
 .nav-link{
-  color:var(--muted); text-decoration:none; padding:8px 12px; border-radius:10px;
-  transition: all var(--transition); font-weight:700; display:inline-flex; align-items:center; gap:8px;
-}
-.nav-link:hover{
-  color:var(--text); transform: translateY(-3px); box-shadow: var(--shadow-md);
-  background: linear-gradient(90deg, rgba(255,255,255,0.9), rgba(255,255,255,0.95));
-  border:1px solid var(--glass-border);
+  color:var(--muted);
+  text-decoration:none;
+  padding:8px 12px;
+  border-radius:10px;
+  transition: all var(--transition);
+  font-weight:700;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  position: relative;
+  overflow: visible;
 }
 
+/* underline slide & soft background reveal */
+.nav-link::after{
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  height: 2px;
+  bottom: 8px;
+  background: linear-gradient(90deg, rgba(14,28,40,0.08), rgba(14,28,40,0.04));
+  border-radius: 2px;
+  transform-origin: left center;
+  transform: scaleX(0);
+  transition: transform 260ms cubic-bezier(.2,.9,.28,1);
+}
+
+/* ripple circle effect on hover (pure CSS) */
+.nav-link::before{
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  background: radial-gradient(circle at 10% 20%, rgba(14,28,40,0.03), transparent 30%);
+  opacity: 0;
+  transform: scale(0.96);
+  transition: opacity 260ms var(--transition-fast), transform 260ms var(--transition-fast);
+  pointer-events: none;
+}
+
+/* hover state */
+.nav-link:hover{
+  color: var(--text);
+  transform: translateY(-6px);
+  box-shadow: 0 10px 30px rgba(11,22,30,0.06);
+  background: linear-gradient(90deg, rgba(255,255,255,0.92), rgba(255,255,255,0.97));
+  border: 1px solid var(--glass-border);
+}
+.nav-link:hover::after{ transform: scaleX(1); }
+.nav-link:hover::before{ opacity: 1; transform: scale(1); }
+
+/* active / focus for accessibility */
+.nav-link:focus{
+  outline: none;
+  box-shadow: 0 6px 24px rgba(14,28,40,0.08);
+  transform: translateY(-4px);
+}
+
+/* optional small badge animation for notification dots */
+.badge {
+  display:inline-grid;
+  place-items:center;
+  min-width:18px;
+  height:18px;
+  padding:0 6px;
+  border-radius:999px;
+  background: linear-gradient(90deg, #ff6b6b, #ff8a8a);
+  color:white;
+  font-size:12px;
+  font-weight:700;
+  transform-origin:center;
+  animation: badge-pop 2.4s ease-in-out infinite;
+}
+@keyframes badge-pop {
+  0%, 80%, 100% { transform: scale(1); opacity: 1; }
+  40% { transform: scale(1.12); opacity: 0.95; }
+}
+
+/* micro motion when header is hovered - gives more liveliness */
+.site-header:hover { animation-play-state: paused; transform: translateY(-2px); }
+
+/* small responsive tweak */
+@media (max-width: 720px){
+  .brand-text { font-size:16px; }
+  .brand-icon { width:40px; height:40px; }
+  .header-inner { gap:8px; }
+  .nav-link { padding:7px 9px; font-weight:700; }
+}
+
+
+/* ///////////////////////////////// */
 /* inline header form */
 .inline-form{ display:inline-block; }
 .btn{
