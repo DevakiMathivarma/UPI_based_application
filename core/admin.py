@@ -244,3 +244,35 @@ class UserAdmin(DjangoUserAdmin):
     search_fields = ('username', 'email', 'phone_number',)
     readonly_fields = ('date_joined',)
     # optionally add list_filter or fieldsets adjustments if needed
+
+
+# analytics page
+# core/admin.py
+from django.contrib import admin
+from django.urls import path
+from django.shortcuts import render
+from django.utils.translation import gettext_lazy as _
+from django.conf import settings
+from django.urls import reverse
+# core/admin.py
+from django.contrib import admin
+from django.urls import path
+from . import views as core_views
+
+# register your models here as usual, e.g.
+# admin.site.register(MyModel)
+
+# Patch admin URLs once (wrap the original function)
+def _get_admin_urls(original_get_urls):
+    def get_urls():
+        # our extra admin-only urls
+        extra = [
+            path('analytics/', admin.site.admin_view(core_views.admin_analytics_view), name='analytics'),
+        ]
+        return extra + original_get_urls()
+    return get_urls
+
+# Only patch once (defensive)
+if not getattr(admin.site, '_analytics_patched', False):
+    admin.site.get_urls = _get_admin_urls(admin.site.get_urls)
+    admin.site._analytics_patched = True

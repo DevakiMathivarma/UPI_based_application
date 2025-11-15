@@ -33,6 +33,12 @@
          
       <!-- Always forces admin login page to appear -->
       <a class="nav-link" href="{% url 'admin:login' %}?next=/admin/">Admin</a>
+{% if request.user.is_active and request.user.is_staff %}
+  <a class="nav-link" href="{% url 'admin:analytics' %}">Analytics</a>
+{% else %}
+  <a class="nav-link" href="{% url 'admin:login' %}?next={% url 'admin:analytics' %}">Analytics</a>
+{% endif %}
+  
     
           <form method="post" action="{% url 'core:logout' %}" class="inline-form">
             {% csrf_token %}

@@ -1,0 +1,49 @@
+{# templates/admin/index.html #}
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+{% block title %}{% trans "Site administration" %}{% endblock %}
+
+{% block content %}
+  <h1>{% trans 'Site administration' %}</h1>
+
+  <div style="margin:8px 0;">
+    <a href="{% url 'admin-analytics' %}" class="button" style="background:#0b6;color:#fff;padding:8px 12px;border-radius:6px;text-decoration:none;">
+      Analytics
+    </a>
+  </div>
+
+  {% for app in app_list %}
+    <div class="app-{{ app.app_label }}">
+      <h2 class="module">{{ app.name }}</h2>
+      <ul class="model-list">
+        {% for model in app.models %}
+          <li>
+            <a href="{{ model.admin_url }}">{{ model.name }}</a>
+            {% if model.perms.change %}<a class="addlink" href="{{ model.add_url }}"> &nbsp;+ Add</a>{% endif %}
+          </li>
+
+          {# optionally insert Analytics link after Transactions / Users rows #}
+          {% with model_name_lower=model.name|lower %}
+            {% if app.app_label == 'core' and (model_name_lower == 'transactions' or model_name_lower == 'users') %}
+              <li>
+                <a href="{% url 'admin-analytics' %}">Analytics</a>
+                <small style="color:#666">Dashboard: transactions &amp; KPIs</small>
+              </li>
+            {% endif %}
+          {% endwith %}
+        {% endfor %}
+      </ul>
+    </div>
+  {% endfor %}
+
+  {% if recent_actions %}
+    <div class="recent-actions">
+      <h2>{% trans "Recents actions" %}</h2>
+      <ul>
+        {% for action in recent_actions %}
+          <li>{{ action }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+{% endblock %}

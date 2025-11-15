@@ -9,7 +9,12 @@ from django.utils import timezone
 from django.http import JsonResponse, HttpResponseBadRequest
 import secrets
 import datetime
-
+import json
+from django.utils import timezone
+from django.db.models import Count, Sum
+from django.db.models.functions import TruncDate
+from datetime import timedelta
+from django.contrib.admin.views.decorators import staff_member_required
 from .models import MobileOTP
 from .forms import RegistrationForm, LoginOTPForm, ResendOTPForm
 
@@ -1324,8 +1329,9 @@ from .models import Transaction
 @login_required
 def transaction_detail(request, txn_id):
     # Accept AJAX only ideally
+    print('comin')
     try:
-        txn = Transaction.objects.get(id=txn_id, user=request.user)
+        txn = Transaction.objects.get(id=txn_id)
     except Transaction.DoesNotExist:
         raise Http404("Transaction not found")
 
@@ -1469,3 +1475,183 @@ def filter_transactions_api(request):
         })
 
     return JsonResponse({'transactions': transactions})
+
+
+# # analytics page
+# # core/views.py (append near other views)
+# from django.contrib.admin.views.decorators import staff_member_required
+# from django.db.models import Count, Sum
+# from django.db.models.functions import TruncDate
+# from django.utils import timezone
+# from datetime import timedelta
+
+# @staff_member_required
+# def admin_analytics_view(request):
+#     """
+#     Admin-only analytics dashboard.
+#     URL: /admin/analytics/
+#     """
+#     # timeframe for the time-series chart
+#     days = 14
+#     today = timezone.localtime().date()
+#     start_date = today - timedelta(days=days - 1)
+
+#     # base queryset (all transactions)
+#     qs = Transaction.objects.all()
+
+#     # KPI aggregates
+#     total_txns = qs.count()
+#     success_count = qs.filter(status__iexact=Transaction.STATUS_SUCCESS if hasattr(Transaction, 'STATUS_SUCCESS') else 'success').count()
+#     pending_count = qs.filter(status__iexact=Transaction.STATUS_PENDING if hasattr(Transaction, 'STATUS_PENDING') else 'pending').count()
+#     failed_count = qs.filter(status__iexact=Transaction.STATUS_FAILED if hasattr(Transaction, 'STATUS_FAILED') else 'failed').count()
+#     total_amount = qs.aggregate(total=Sum('amount'))['total'] or 0
+
+#     # active users in last N days (unique users who created txns since start_date)
+#     active_users = Transaction.objects.filter(created_at__date__gte=start_date).values('user_id').distinct().count()
+
+#     # transactions per day (last `days` days) - fill zeros for missing days
+#     daily_qs = (Transaction.objects
+#                 .filter(created_at__date__gte=start_date)
+#                 .annotate(day=TruncDate('created_at'))
+#                 .values('day')
+#                 .annotate(count=Count('id'))
+#                 .order_by('day'))
+
+#     # build day -> count map
+#     day_map = {entry['day']: entry['count'] for entry in daily_qs}
+
+#     labels = []
+#     series = []
+#     for i in range(days):
+#         d = start_date + timedelta(days=i)
+#         labels.append(d.strftime("%Y-%m-%d"))
+#         series.append(day_map.get(d, 0))
+
+#     # status distribution for donut chart
+#     status_dist_qs = qs.values('status').annotate(count=Count('id'))
+#     status_map = {row['status'] or 'unknown': row['count'] for row in status_dist_qs}
+#     # normalize keys
+#     status_labels = []
+#     status_counts = []
+#     for k, v in status_map.items():
+#         status_labels.append(str(k).capitalize())
+#         status_counts.append(v)
+
+#     # provider distribution (optional)
+#     provider_qs = qs.values('provider').annotate(count=Count('id')).order_by('-count')[:10]
+#     provider_labels = [p['provider'] or 'unknown' for p in provider_qs]
+#     provider_counts = [p['count'] for p in provider_qs]
+
+#     context = {
+#         'total_txns': total_txns,
+#         'success_count': success_count,
+#         'pending_count': pending_count,
+#         'failed_count': failed_count,
+#         'total_amount': float(total_amount),
+#         'active_users': active_users,
+#         'labels_json': labels,            # Chart.js labels
+#         'series_json': series,            # Chart.js data
+#         'status_labels': status_labels,
+#         'status_counts': status_counts,
+#         'provider_labels': provider_labels,
+#         'provider_counts': provider_counts,
+#     }
+#     return render(request, 'admin/analytics.html', context)
+# add at top if not present
+from django.utils import timezone
+from django.db.models import Count, Sum
+from django.db.models.functions import TruncDate
+from django.utils import timezone
+from django.contrib.admin.views.decorators import staff_member_required
+from datetime import timedelta
+
+@staff_member_required
+def admin_analytics_view(request):
+    """
+    Admin-only analytics dashboard (robust to naive/aware datetimes).
+    """
+    # get a timezone-aware "now" where possible
+    now = timezone.now()  # returns aware if USE_TZ=True, naive if False
+
+    # if naive, make it aware using default timezone (defensive)
+    try:
+        if timezone.is_naive(now):
+            default_tz = timezone.get_default_timezone()
+            now = timezone.make_aware(now, default_tz)
+    except Exception:
+        # fallback: if something odd happens, just use datetime.date.today()
+        import datetime as _dt
+        today = _dt.date.today()
+    else:
+        today = now.date()
+
+    # timeframe
+    days = 14
+    start_date = today - timedelta(days=days - 1)
+
+    qs = Transaction.objects.all()
+
+    # KPIs
+    total_txns = qs.count()
+    success_val = getattr(Transaction, 'STATUS_SUCCESS', 'success')
+    pending_val = getattr(Transaction, 'STATUS_PENDING', 'pending')
+    failed_val = getattr(Transaction, 'STATUS_FAILED', 'failed')
+
+    success_count = qs.filter(status__iexact=success_val).count()
+    pending_count = qs.filter(status__iexact=pending_val).count()
+    failed_count = qs.filter(status__iexact=failed_val).count()
+    total_amount = qs.aggregate(total=Sum('amount'))['total'] or 0
+
+    # active users in period
+    active_users = Transaction.objects.filter(created_at__date__gte=start_date).values('user_id').distinct().count()
+
+    # daily counts (last `days`)
+    daily_qs = (
+        Transaction.objects
+        .filter(created_at__date__gte=start_date)
+        .annotate(day=TruncDate('created_at'))
+        .values('day')
+        .annotate(count=Count('id'))
+        .order_by('day')
+    )
+    day_map = {entry['day']: entry['count'] for entry in daily_qs}
+
+    labels = []
+    series = []
+    for i in range(days):
+        d = start_date + timedelta(days=i)
+        labels.append(d.strftime("%Y-%m-%d"))
+        series.append(day_map.get(d, 0))
+
+    # status distribution
+    status_dist_qs = qs.values('status').annotate(count=Count('id'))
+    status_labels = []
+    status_counts = []
+    for row in status_dist_qs:
+        status_labels.append((row['status'] or 'unknown').capitalize())
+        status_counts.append(row['count'])
+
+    # provider distribution
+    provider_qs = qs.values('provider').annotate(count=Count('id')).order_by('-count')[:10]
+    provider_labels = [p['provider'] or 'unknown' for p in provider_qs]
+    provider_counts = [p['count'] for p in provider_qs]
+
+    context = {
+    'total_txns': total_txns,
+    'success_count': success_count,
+    'pending_count': pending_count,
+    'failed_count': failed_count,
+    'total_amount': float(total_amount),
+    'active_users': active_users,
+
+    # Always JSON dumps — template will read them safely
+    'labels_json': json.dumps(labels),
+    'series_json': json.dumps(series),
+    'status_labels_json': json.dumps(status_labels),
+    'status_counts_json': json.dumps(status_counts),
+    'provider_labels_json': json.dumps(provider_labels),
+    'provider_counts_json': json.dumps(provider_counts),
+    }
+
+    return render(request, 'admin/analytics.html', context)
+

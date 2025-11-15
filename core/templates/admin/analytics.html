@@ -1,0 +1,124 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Analytics — Admin{% endblock %}
+
+{% block content %}
+<style>
+  .analytics-row { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:18px; }
+  .kpi { background:#fff; padding:14px; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,.06); flex:1 1 180px; min-width:160px; }
+  .kpi h2{margin:0;font-size:16px;color:#20504f}
+  .kpi p{margin:6px 0 0;font-size:22px;font-weight:700}
+  .charts { display:flex; gap:20px; flex-wrap:wrap; }
+.chart-card {
+    background:#fff;
+    padding:12px;
+    border-radius:8px;
+    box-shadow:0 1px 4px rgba(0,0,0,.06);
+    flex:1 1 420px;
+    min-width:300px;
+
+    /* FIXED HEIGHT so Chart.js doesn’t stretch forever */
+    height: 260px;   
+    position: relative; 
+}
+
+.chart-card canvas {
+    /* Make the canvas fill the card height exactly */
+    width: 100% !important;
+    height: 100% !important;
+}
+
+</style>
+
+<h1>Analytics</h1>
+
+<div class="analytics-row">
+  <div class="kpi"><h2>Total transactions</h2><p>{{ total_txns }}</p></div>
+  <div class="kpi"><h2>Total processed (₹)</h2><p>₹{{ total_amount|floatformat:2 }}</p></div>
+  <div class="kpi"><h2>Active users</h2><p>{{ active_users }}</p></div>
+  <div class="kpi"><h2>Success / Pending / Failed</h2><p>{{ success_count }} / {{ pending_count }} / {{ failed_count }}</p></div>
+</div>
+
+<div class="charts">
+  <div class="chart-card">
+    <h3>Transactions per day</h3>
+    <canvas id="txnsBarChart"></canvas>
+  </div>
+  <div class="chart-card">
+    <h3>Status distribution</h3>
+    <canvas id="statusDonut"></canvas>
+  </div>
+</div>
+
+<div class="charts" style="margin-top:18px;">
+  <div class="chart-card" style="flex:0 1 420px;">
+    <h3>Top providers</h3>
+    <canvas id="providerBar"></canvas>
+  </div>
+  <div class="chart-card">
+    <h3>Notes</h3>
+    <p>Click bars to drill down into filtered admin pages.</p>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  if (typeof Chart === 'undefined') {
+    console.error("Chart.js not loaded");
+    return;
+  }
+
+  // Data from Django (JSON strings dumped in the view)
+  const labels = {{ labels_json|safe }};
+  const series = {{ series_json|safe }};
+  const statusLabels = {{ status_labels_json|safe }};
+  const statusCounts = {{ status_counts_json|safe }};
+  const providerLabels = {{ provider_labels_json|safe }};
+  const providerCounts = {{ provider_counts_json|safe }};
+
+  console.log("DATA:", { labels, series, statusLabels, statusCounts, providerLabels, providerCounts });
+
+  // Transactions per day
+  try {
+    new Chart(document.getElementById('txnsBarChart'), {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{ label: 'Transactions', data: series, backgroundColor: 'rgba(54,162,235,0.8)' }]
+      },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+  } catch(e){ console.error(e); }
+
+  // Status donut
+  try {
+    new Chart(document.getElementById('statusDonut'), {
+      type: 'doughnut',
+      data: {
+        labels: statusLabels,
+        datasets: [{ data: statusCounts, backgroundColor: ['#4caf50','#ffb300','#f44336'] }]
+      },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+  } catch(e){ console.error(e); }
+
+  // Providers bar chart
+  try {
+    new Chart(document.getElementById('providerBar'), {
+      type: 'bar',
+      data: {
+        labels: providerLabels,
+        datasets: [{ label: 'Count', data: providerCounts, backgroundColor: 'rgba(99,102,241,0.8)' }]
+      },
+      options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false }
+    });
+  } catch(e){ console.error(e); }
+
+});
+</script>
+
+{% endblock %}

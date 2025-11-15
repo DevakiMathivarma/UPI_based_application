@@ -327,6 +327,7 @@ background: rgba(251, 233, 196, 0.45);
   align-items:flex-start;
   margin-top:10px;
   flex-wrap:wrap;
+  
 }
 
 /* Methods column */
@@ -354,7 +355,8 @@ background: rgba(251, 233, 196, 0.45);
 }
 .method-btn:hover{
   transform: translateY(-3px);
-  box-shadow: 0 10px 24px rgba(2,6,10,0.65);
+  box-shadow: 0 10px 24px rgba(2,6,10,0.5);
+ 
   background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
 }
 
@@ -624,6 +626,13 @@ background: rgba(251, 233, 196, 0.45);
     border-radius: 10px !important;
   }
 
+  .txnfilters{
+  display: flex;
+  flex-direction: column;
+  width:100%;
+  margin: auto;
+  gap:30px;
+}
   .header-inner {
     display:flex !important;
     align-items:center;
@@ -703,7 +712,8 @@ background: rgba(251, 233, 196, 0.45);
   #transactionsSection {
       width: 100%;
       overflow-x: auto;
-     
+     overflow-y: auto;
+     min-height: 350;
       -webkit-overflow-scrolling: touch;
       background-color: white;
       
@@ -796,6 +806,7 @@ background: rgba(251, 233, 196, 0.45);
     border-radius: 10px;
   }
 
+
   .btn, .method-btn {
     width: 100%;
     padding: 12px;
@@ -806,6 +817,55 @@ background: rgba(251, 233, 196, 0.45);
   #scanQrBtn, #addMoneyBtn, #showQR {
     width: 100%;
   }
+    #transactionsSection {
+      width: 100%;
+      overflow-x: auto;
+     overflow-y: auto;
+     min-height: 350;
+      -webkit-overflow-scrolling: touch;
+      background-color: white;
+      
+  }
+      .txnfilters{
+  display: flex;
+  flex-direction: column;
+  width:100%;
+  margin: auto;
+  gap:30px;
+}
+   /* NAV: center links; allow wrapping; keep logout pushed right */
+  .nav {
+    display:flex !important;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    flex:1 1 auto;
+    min-width:0;
+    flex-wrap:wrap;
+  }
+  .nav-link {
+    padding:6px 8px;
+    font-size:13px;
+    white-space:nowrap;
+    max-width:48%;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    box-sizing:border-box;
+  }
+
+  /* Ensure logout element (button/anchor) sits at far right */
+  .nav > .btn, .nav > .btn-ghost, .nav > .btn-primary, .nav > button, .nav > a.btn {
+    margin-left:auto !important;
+    flex:0 0 auto;
+    height:36px;
+    padding:6px 10px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:10px;
+    white-space:nowrap;
+  }
+
 
   /* QR container and canvas sizing */
   #qrContainer {
@@ -923,6 +983,55 @@ background: rgba(251, 233, 196, 0.45);
     flex-direction: column;
     gap: 14px;
   }
+  #transactionsSection {
+      width: 100%;
+      overflow-x: auto;
+     overflow-y: auto;
+     min-height: 350;
+      -webkit-overflow-scrolling: touch;
+      background-color: white;
+      
+  }
+      .txnfilters{
+  display: flex;
+  flex-direction: column;
+  width:100%;
+  margin: auto;
+  gap:30px;
+}
+   /* NAV: center links; allow wrapping; keep logout pushed right */
+  .nav {
+    display:flex !important;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    flex:1 1 auto;
+    min-width:0;
+    flex-wrap:wrap;
+  }
+  .nav-link {
+    padding:6px 8px;
+    font-size:13px;
+    white-space:nowrap;
+    max-width:48%;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    box-sizing:border-box;
+  }
+
+  /* Ensure logout element (button/anchor) sits at far right */
+  .nav > .btn, .nav > .btn-ghost, .nav > .btn-primary, .nav > button, .nav > a.btn {
+    margin-left:auto !important;
+    flex:0 0 auto;
+    height:36px;
+    padding:6px 10px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:10px;
+    white-space:nowrap;
+  }
+
 
   .card.small {
     flex: none;
@@ -1096,7 +1205,15 @@ background: rgba(251, 233, 196, 0.45);
   .payment-grid{ flex-direction:column; gap:12px; }
   .modal-inner{ padding:16px; border-radius:12px; }
   #qrImg{ width:220px; height:220px; margin:0 auto; }
+        .txnfilters{
+  display: flex;
+  flex-direction: column;
+  width:100%;
+  margin: auto;
+  gap:30px;
 }
+}
+
 
 .txn-row { cursor: pointer; transition: background 180ms ease, transform 180ms ease; }
 .txn-row:hover { background: linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.015)); transform: translateY(-1px); }
@@ -1584,3 +1701,158 @@ body::after,
     animation: none !important;
   }
 }
+/* Hide the native checkbox */
+/* --- Vars: tweak to match your theme --- */
+:root {
+  --txn-size: 20px;
+  --txn-border: 2px;
+  --txn-border-color: #8fa4b2;
+  --txn-accent: #2ea6df;   /* fill color when checked */
+  --txn-accent-2: #1f8fb8; /* ripple / accent shadow */
+  --txn-bg: #fff;
+  --txn-duration: 360ms;
+}
+
+/* Base reset */
+.txn-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: var(--txn-size);
+  height: var(--txn-size);
+  border-radius: 6px;
+  display: inline-block;
+  vertical-align: middle;
+  cursor: pointer;
+  position: relative;
+  border: var(--txn-border) solid var(--txn-border-color);
+  background: var(--txn-bg);
+  transition:
+    transform 220ms cubic-bezier(.2,.9,.3,1),
+    box-shadow 260ms ease,
+    border-color var(--txn-duration) ease,
+    background-color var(--txn-duration) ease;
+  transform-origin: 50% 50%;
+  box-shadow: 0 0 0 0 rgba(0,0,0,0);
+  outline: none;
+}
+
+/* subtle hover lift */
+.txn-checkbox:hover {
+  transform: translateY(-2px) scale(1.02);
+  border-color: var(--txn-accent);
+}
+
+/* focus visible ring (accessibility) */
+.txn-checkbox:focus-visible {
+  box-shadow: 0 0 0 6px rgba(46,166,223,0.12);
+}
+
+/* ripple pseudo-element (expands on click) */
+.txn-checkbox::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  background: radial-gradient(circle at 30% 30%, rgba(31,143,184,0.22) 0, rgba(31,143,184,0.08) 10%, transparent 40%);
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 260ms ease, transform 420ms cubic-bezier(.2,.9,.3,1);
+  pointer-events: none;
+}
+
+/* animated fill layer (scales in behind checkmark) */
+.txn-checkbox::after {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  border-radius: 4px;
+  background: var(--txn-accent);
+  transform: scale(0);
+  opacity: 0;
+  transition: transform calc(var(--txn-duration) * 1.1) cubic-bezier(.15,.8,.35,1), opacity 160ms ease;
+  z-index: 0;
+}
+
+/* checkmark layer using svg-like stroke (hand-drawn feel) */
+.txn-checkbox .checkmark,
+.txn-checkbox__svg {
+  position: absolute;
+  inset: 0;
+  display: block;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* default hidden check graphic (we'll animate stroke-dashoffset) */
+.txn-checkbox svg {
+  width: 100%; height: 100%;
+  display: block;
+  transform: translateZ(0);
+}
+
+/* line style for stroke animation */
+.txn-checkbox path {
+  stroke: #fff;
+  stroke-width: 2.4;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 18;      /* total length estimate */
+  stroke-dashoffset: 18;     /* hide it initially */
+  transition: stroke-dashoffset calc(var(--txn-duration) * 1.05) cubic-bezier(.2,.9,.3,1);
+  will-change: stroke-dashoffset;
+}
+
+/* Checked state: scale fill, reveal checkmark, ripple in */
+.txn-checkbox:checked {
+  border-color: var(--txn-accent);
+  background: transparent; /* fill layer covers it */
+  transform: scale(0.98);
+}
+
+/* show fill */
+.txn-checkbox:checked::after {
+  transform: scale(1);
+  opacity: 1;
+  transition-delay: 40ms;
+}
+
+/* reveal check by moving dashoffset to 0 */
+.txn-checkbox:checked path {
+  stroke-dashoffset: 0;
+}
+
+/* ripple on active (mouse down) */
+.txn-checkbox:active::before {
+  opacity: 1;
+  transform: scale(1);
+  transition-duration: 260ms;
+}
+
+/* little bounce out after check (subtle) */
+.txn-checkbox:checked {
+  animation: txn-pop 420ms cubic-bezier(.2,.9,.3,1);
+}
+@keyframes txn-pop {
+  0%   { transform: scale(0.98); }
+  60%  { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+/* Respect reduced motion — disable heavy animations */
+@media (prefers-reduced-motion: reduce) {
+  .txn-checkbox,
+  .txn-checkbox::before,
+  .txn-checkbox::after,
+  .txn-checkbox path,
+  .txn-checkbox svg {
+    transition: none !important;
+    animation: none !important;
+  }
+  .txn-checkbox path { stroke-dashoffset: 0; }
+  .txn-checkbox::after { transform: scale(1); opacity: 1; }
+  .txn-checkbox::before { opacity: 0; transform: none; }
+}
+
+/* optional: tighten alignment inside table cell */
+.td-checkbox { padding: 6px 10px; text-align: center; }

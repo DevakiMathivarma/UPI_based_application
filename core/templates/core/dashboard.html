@@ -31,8 +31,13 @@
     <div id="qrContainer" class="card small" style="margin-top: 15px; text-align:center; display:none;">
       <h5>Scan to Pay</h5>
       <canvas id="upiQr"></canvas>
-    </div>
+   <div>
+    <button id="downloadQrBtn" class="btncolr">
 
+    Download QR
+</button>
+</div>
+ </div>
 
   </div>
 
@@ -112,11 +117,17 @@
   <div id="transactionsSection">
     <div class="card">
       <h3>Recent Transactions</h3>
+
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:8px;">
+        <button id="exportBtn" class="btncolr" type="button">Export</button>
+        <!-- optional: you can add other controls here -->
+      </div>
+
       <div class="txn-table-wrap">
         <table class="txn-table">
           <thead>
             <tr>
-
+              <th><input id="selectAll" type="checkbox" aria-label="Select all transactions"></th>
               <th>Date</th>
               <th>To</th>
               <th>Amount</th>
@@ -126,7 +137,7 @@
           </thead>
           <tbody id="txnBody">
             <tr>
-              <td colspan="5">Loading...</td>
+              <td colspan="6">Loading...</td>
             </tr>
           </tbody>
         </table>
@@ -800,87 +811,87 @@
 
       y += boxHeight + 20;
 
-  // --- Items Table header (REPLACED for better column alignment) ---
-const tableLeft = leftMargin;
-const tableRight = rightLimit;
-const tableWidth = tableRight - tableLeft;
+      // --- Items Table header (REPLACED for better column alignment) ---
+      const tableLeft = leftMargin;
+      const tableRight = rightLimit;
+      const tableWidth = tableRight - tableLeft;
 
-// column positions (tuned)
-const colDesc = tableLeft + 8;
-const colQtyX = tableLeft + Math.round(tableWidth * 0.62);   // Qty column (center)
-const colRateX = tableLeft + Math.round(tableWidth * 0.72);  // Rate (right aligned)
-const colAmountX = tableLeft + Math.round(tableWidth * 0.90); // Amount (right aligned)
+      // column positions (tuned)
+      const colDesc = tableLeft + 8;
+      const colQtyX = tableLeft + Math.round(tableWidth * 0.62);   // Qty column (center)
+      const colRateX = tableLeft + Math.round(tableWidth * 0.72);  // Rate (right aligned)
+      const colAmountX = tableLeft + Math.round(tableWidth * 0.90); // Amount (right aligned)
 
-// header background
-doc.setDrawColor(180);
-doc.setFillColor(245, 245, 245);
-doc.rect(tableLeft, y, tableWidth, 22, 'F'); // header bg
+      // header background
+      doc.setDrawColor(180);
+      doc.setFillColor(245, 245, 245);
+      doc.rect(tableLeft, y, tableWidth, 22, 'F'); // header bg
 
-doc.setFont('helvetica', 'bold');
-doc.setFontSize(11);
-doc.text('Description', colDesc, y + 15);
-doc.text('Qty', colQtyX, y + 15, { align: 'center' });
-doc.text('Rate', colRateX, y + 15, { align: 'right' });
-doc.text('Amount', colAmountX, y + 15, { align: 'right' });
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.text('Description', colDesc, y + 15);
+      doc.text('Qty', colQtyX, y + 15, { align: 'center' });
+      doc.text('Rate', colRateX, y + 15, { align: 'right' });
+      doc.text('Amount', colAmountX, y + 15, { align: 'right' });
 
-y += 28;
+      y += 28;
 
-// --- Single item row (improved layout) ---
-doc.setFont('helvetica', 'normal');
-doc.setFontSize(11);
-const desc = `Payment - Transaction ${txn}`;
-const qty = 1;
-const rate = amount;
-const amt = amount;
+      // --- Single item row (improved layout) ---
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(11);
+      const desc = `Payment - Transaction ${txn}`;
+      const qty = 1;
+      const rate = amount;
+      const amt = amount;
 
-// draw row box (full-width)
-const rowH = 22;
-doc.rect(tableLeft, y - 6, tableWidth, rowH);
+      // draw row box (full-width)
+      const rowH = 22;
+      doc.rect(tableLeft, y - 6, tableWidth, rowH);
 
-// description: allow wrapping up to description column max width
-const descMaxWidth = colQtyX - colDesc - 12; // space before qty column
-doc.text(doc.splitTextToSize(desc, descMaxWidth), colDesc, y + 12);
+      // description: allow wrapping up to description column max width
+      const descMaxWidth = colQtyX - colDesc - 12; // space before qty column
+      doc.text(doc.splitTextToSize(desc, descMaxWidth), colDesc, y + 12);
 
-// qty (centered in its column region)
-doc.text(String(qty), colQtyX, y + 12, { align: 'center' });
+      // qty (centered in its column region)
+      doc.text(String(qty), colQtyX, y + 12, { align: 'center' });
 
-// rate & amount (right aligned)
-doc.text(formatINR(rate), colRateX, y + 12, { align: 'right' });
-doc.text(formatINR(amt), colAmountX, y + 12, { align: 'right' });
+      // rate & amount (right aligned)
+      doc.text(formatINR(rate), colRateX, y + 12, { align: 'right' });
+      doc.text(formatINR(amt), colAmountX, y + 12, { align: 'right' });
 
-y += rowH + 12;
+      y += rowH + 12;
 
-// --- Totals (right side) ---
-const totalsX = leftMargin + Math.round(tableWidth * 0.62);
-const totalsRight = tableRight - 8;
-const lineH = 16;
+      // --- Totals (right side) ---
+      const totalsX = leftMargin + Math.round(tableWidth * 0.62);
+      const totalsRight = tableRight - 8;
+      const lineH = 16;
 
-const subtotal = amt;
-const taxPercent = 0;
-const tax = +(subtotal * taxPercent / 100);
-const grandTotal = subtotal + tax;
+      const subtotal = amt;
+      const taxPercent = 0;
+      const tax = +(subtotal * taxPercent / 100);
+      const grandTotal = subtotal + tax;
 
-doc.setFont('helvetica', 'normal');
-doc.setFontSize(11);
-// Subtotal
-doc.text('Subtotal', totalsX, y);
-doc.text(formatINR(subtotal), totalsRight, y, { align: 'right' });
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(11);
+      // Subtotal
+      doc.text('Subtotal', totalsX, y);
+      doc.text(formatINR(subtotal), totalsRight, y, { align: 'right' });
 
-// Tax (if any)
-if (taxPercent > 0) {
-  y += lineH;
-  doc.text(`Tax (${taxPercent}%)`, totalsX, y);
-  doc.text(formatINR(tax), totalsRight, y, { align: 'right' });
-}
+      // Tax (if any)
+      if (taxPercent > 0) {
+        y += lineH;
+        doc.text(`Tax (${taxPercent}%)`, totalsX, y);
+        doc.text(formatINR(tax), totalsRight, y, { align: 'right' });
+      }
 
-// Grand total (emphasized)
-y += lineH;
-doc.setFont('helvetica', 'bold');
-doc.setFontSize(13);
-doc.text('Total', totalsX, y + 6);
-doc.text(formatINR(grandTotal), totalsRight, y + 6, { align: 'right' });
+      // Grand total (emphasized)
+      y += lineH;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.text('Total', totalsX, y + 6);
+      doc.text(formatINR(grandTotal), totalsRight, y + 6, { align: 'right' });
 
-y += 36;
+      y += 36;
 
 
       // --- Notes / Footer ---
@@ -908,25 +919,28 @@ y += 36;
     });
 
 
-    // event delegation for clicks on transaction rows
     document.getElementById('txnBody').addEventListener('click', async function (ev) {
-      const tr = ev.target.closest('tr.txn-row');
-      if (!tr) return;
-      const txnId = tr.dataset.txn;
-      console.log('YTBNS ', txnId)
-      // fetch detail from server
-      try {
-        const resp = await fetch("{% url 'core:transaction_detail' 0 %}".replace('/0/', '/' + txnId + '/'), {
-          headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        });
-        if (!resp.ok) throw new Error('fetch failed');
-        const data = await resp.json();
-        populateTxnModal(data.transaction);
-      } catch (err) {
-        console.error(err);
-        alert('Failed to load transaction details.');
-      }
+  // if the click was on an input with class txn-checkbox (or inside it), do nothing
+  if (ev.target.closest && ev.target.closest('input.txn-checkbox, label')) {
+    return;
+  }
+
+  const tr = ev.target.closest && ev.target.closest('tr.txn-row');
+  if (!tr) return;
+  const txnId = tr.dataset.txn;
+  // fetch detail from server
+  try {
+    const resp = await fetch("{% url 'core:transaction_detail' 0 %}".replace('/0/', '/' + txnId + '/'), {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
     });
+    if (!resp.ok) throw new Error('fetch failed');
+    const data = await resp.json();
+    populateTxnModal(data.transaction);
+  } catch (err) {
+    console.error(err);
+    alert('Failed to load transaction details.');
+  }
+});
 
     function populateTxnModal(t) {
       // Basic summary
@@ -999,9 +1013,14 @@ y += 36;
       const tbody = document.getElementById('txnBody');
       if (!tbody) return;
       if (!transactions || transactions.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5">No transactions found</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6">No transactions found</td></tr>`;
+        window.currentTransactions = [];
+        updateSelectAllState();
         return;
       }
+
+      // store for export and other actions
+      window.currentTransactions = transactions.slice();
 
       tbody.innerHTML = transactions.map(tx => {
         const statusClass = tx.status === 'success' ? 'status-pill success'
@@ -1011,8 +1030,10 @@ y += 36;
         const to = tx.to || '';
         const amount = tx.amount != null ? tx.amount : '';
         const provider = tx.provider || '';
+        // include txn.txn_id inside the 'To' column as you already were rendering
         return `
 <tr class="txn-row" data-txn="${escapeHtml(String(tx.id))}">
+  <td><input type="checkbox" class="txn-checkbox" data-txn="${escapeHtml(String(tx.id))}" aria-label="Select transaction"></td>
   <td>${escapeHtml(date)}</td>
   <td>${escapeHtml(to)} <div style="font-size:11px;color:#98a3a3">${escapeHtml(tx.txn_id || '')}</div></td>
   <td>₹${escapeHtml(String(amount))}</td>
@@ -1020,6 +1041,10 @@ y += 36;
   <td><span class="${statusClass}">${escapeHtml(capitalize(tx.status || ''))}</span></td>
 </tr>`;
       }).join('');
+
+      // after rendering, attach change listeners for checkboxes
+      attachCheckboxListeners();
+      updateSelectAllState();
     }
 
     // main fetching function
@@ -1193,7 +1218,195 @@ y += 36;
   })();
 
 
+  function escapeHtml(str = '') {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+  function capitalize(s = '') {
+    s = String(s || '');
+    return s ? s[0].toUpperCase() + s.slice(1) : s;
+  }
+  /* --- end helpers --- */
 
+  /* Keep the currently rendered transactions accessible for export */
+  window.currentTransactions = [];
+
+  /* renderRows: adds checkbox column and stores displayed txns */
+  // function renderRows(transactions) {
+  //   const tbody = document.getElementById('txnBody');
+  //   if (!tbody) return;
+  //   if (!transactions || transactions.length === 0) {
+  //     tbody.innerHTML = `<tr><td colspan="6">No transactions found</td></tr>`;
+  //     window.currentTransactions = [];
+  //     updateSelectAllState();
+  //     return;
+  //   }
+
+  //   // store for export and other actions
+  //   window.currentTransactions = transactions.slice();
+
+  //   tbody.innerHTML = transactions.map(tx => {
+  //     const statusClass = tx.status === 'success' ? 'status-pill success'
+  //       : tx.status === 'pending' ? 'status-pill pending'
+  //         : 'status-pill failed';
+  //     const date = tx.date || '';
+  //     const to = tx.to || '';
+  //     const amount = tx.amount != null ? tx.amount : '';
+  //     const provider = tx.provider || '';
+  //     // include txn.txn_id inside the 'To' column as you already were rendering
+  //     return `
+  // <tr class="txn-row" data-txn="${escapeHtml(String(tx.id))}">
+  //   <td><input type="checkbox" class="txn-checkbox" data-txn="${escapeHtml(String(tx.id))}" aria-label="Select transaction"></td>
+  //   <td>${escapeHtml(date)}</td>
+  //   <td>${escapeHtml(to)} <div style="font-size:11px;color:#98a3a3">${escapeHtml(tx.txn_id || '')}</div></td>
+  //   <td>₹${escapeHtml(String(amount))}</td>
+  //   <td>${escapeHtml(provider)}</td>
+  //   <td><span class="${statusClass}">${escapeHtml(capitalize(tx.status || ''))}</span></td>
+  // </tr>`;
+  //   }).join('');
+
+  //   // after rendering, attach change listeners for checkboxes
+  //   attachCheckboxListeners();
+  //   updateSelectAllState();
+  // }
+
+  /* Attach listeners for per-row checkboxes so we can keep header checkbox synced */
+  function attachCheckboxListeners() {
+  // find the current checkboxes
+  const checkboxes = Array.from(document.querySelectorAll('.txn-checkbox'));
+
+  checkboxes.forEach(cb => {
+    // ensure we don't attach duplicates:
+    cb.onchange = onRowCheckboxChange;
+
+    // stop click events from bubbling to the row click listener:
+    cb.addEventListener('click', function (ev) {
+      ev.stopPropagation();
+      // optionally update header checkbox state immediately (if you want)
+      // updateSelectAllState();
+    }, { passive: false });
+
+    // optional: keyboard (space/enter) on checkbox can also toggle and bubble.
+    // stopping keydown propagation for space prevents accidental row click via keyboard.
+    cb.addEventListener('keydown', function (ev) {
+      if (ev.key === ' ' || ev.key === 'Spacebar' || ev.key === 'Enter') {
+        ev.stopPropagation();
+      }
+    });
+  });
+}
+
+/* Keep header select-all synced with per-row selections */
+function updateSelectAllState() {
+  const selectAll = document.getElementById('selectAll');
+  if (!selectAll) return;
+  const boxes = Array.from(document.querySelectorAll('.txn-checkbox'));
+  if (boxes.length === 0) {
+    selectAll.checked = false;
+    selectAll.indeterminate = false;
+    return;
+  }
+  const checkedCount = boxes.filter(b => b.checked).length;
+  selectAll.checked = checkedCount === boxes.length;
+  selectAll.indeterminate = checkedCount > 0 && checkedCount < boxes.length;
+}
+
+  /* Called when a row checkbox changes */
+  function onRowCheckboxChange() {
+    updateSelectAllState();
+  }
+
+  /* Header select all toggle */
+  document.addEventListener('change', function (ev) {
+    const el = ev.target;
+    if (el && el.id === 'selectAll') {
+      const checked = el.checked;
+      const boxes = Array.from(document.querySelectorAll('.txn-checkbox'));
+      boxes.forEach(b => b.checked = checked);
+      updateSelectAllState();
+    }
+  });
+
+  /* Export logic: builds CSV and triggers download */
+  function exportTransactions() {
+    const allTxns = window.currentTransactions || [];
+    if (!Array.isArray(allTxns)) return;
+
+    // find selected txn ids
+    const selectedBoxes = Array.from(document.querySelectorAll('.txn-checkbox:checked'));
+    let txnsToExport;
+    if (selectedBoxes.length > 0) {
+      const selectedIds = new Set(selectedBoxes.map(b => String(b.dataset.txn)));
+      txnsToExport = allTxns.filter(t => selectedIds.has(String(t.id)));
+    } else {
+      // no selection -> export all currently displayed transactions
+      txnsToExport = allTxns.slice();
+    }
+
+    if (txnsToExport.length === 0) {
+      alert('No transactions to export.');
+      return;
+    }
+
+    // Build CSV: header + rows
+    const header = ['id', 'date', 'to', 'txn_id', 'amount', 'provider', 'status'];
+    const rows = txnsToExport.map(t => [
+      t.id ?? '',
+      t.date ?? '',
+      t.to ?? '',
+      t.txn_id ?? '',
+      t.amount ?? '',
+      t.provider ?? '',
+      t.status ?? ''
+    ]);
+
+    const csvContent = [header, ...rows].map(r => r.map(csvEscape).join(',')).join('\r\n');
+
+    downloadCSV(csvContent, `transactions_${formatDateForFilename(new Date())}.csv`);
+  }
+
+  /* CSV escaping - wrap in quotes and escape inner quotes */
+  function csvEscape(field) {
+    if (field === null || field === undefined) return '""';
+    const s = String(field);
+    // if contains comma, newline or quote, wrap in quotes and double the quotes inside
+    if (/[",\r\n]/.test(s)) {
+      return '"' + s.replace(/"/g, '""') + '"';
+    }
+    return '"' + s + '"';
+  }
+
+  function downloadCSV(text, filename) {
+    const blob = new Blob([text], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+document.getElementById("downloadQrBtn").addEventListener("click", function () {
+    const canvas = document.getElementById("upiQr");
+    const link = document.createElement("a");
+
+    link.download = "vpay_qr.png";                  // File name
+    link.href = canvas.toDataURL("image/png");     // Convert to image
+    link.click();                                  // Trigger download
+});
+
+  function formatDateForFilename(d) {
+    // YYYYMMDD_HHMM
+    const z = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}${z(d.getMonth() + 1)}${z(d.getDate())}_${z(d.getHours())}${z(d.getMinutes())}`;
+  }
+
+  /* Wire up export button */
+  document.getElementById('exportBtn')?.addEventListener('click', exportTransactions);
 
 </script>
 
